@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Question 1 starts
+
 # Create the directory if it doesn't exist
 mkdir -p /opt/KDOB00201
 
@@ -32,3 +34,37 @@ EOF
 echo "Created /opt/KDOB00201/counter-pod.yaml"
 echo "Created /opt/KDOB00201/log_output.txt"
 
+# Q2
+kubectl create ns web
+
+# Q4 
+kubectl create ns pod-resources
+
+# Q6
+kubectl create namespace frontend --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl create serviceaccount restrictedservice --namespace=frontend
+
+cat <<EOF | kubectl apply -n frontend -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appa
+  template:
+    metadata:
+      labels:
+        app: appa
+    spec:
+      containers:
+      - name: appa-container
+        image: nginx
+        ports:
+        - containerPort: 80
+EOF
+
+echo "ServiceAccount 'restrictedservice' and Deployment 'appa' have been created in the 'frontend' namespace."
