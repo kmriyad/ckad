@@ -82,6 +82,25 @@ Please complete the following:
 - Update the webapp deployment in the kdpd00202 namespace with a maxSurge of 4 and a maxUnavailable of 10%
 - Perform a rolling update of the webapp deployment, changing the lfccncf/nginx Image version to 1.13
 - Roll back the webapp deployment to the previous version
+### Question 12 (7)
+#### Context
+Given a container that writes a log file in format A and a container that converts log files from format A to format B, create a deployment that runs both containers such that the log files from the first container are converted by the second container, emitting logs in format B.
+#### Task
+Create a deployment named deployment-007 in the default namespace, that:
+- Includes a primary lfccncf/busybox:1 container, named logger-123
+- Includes a sidecar lfccncf/fluentd:v0.12 container, named adaptor-dev
+- Mounts a shared volume /tmp/log on both containers, which does not persist when the pod is deleted
+- Instructs the logger-123 container to run the command
+    while true; do
+        echo "i luv cncf" >> /tmp/log/input.log;
+        sleep 10;
+    done
+- which should output logs to /tmp/log/input.log in plain text format, with example values:
+    i luv cncf
+    i luv cncf
+    i luv cncf
+- The adaptor-dev sidecar container should read /tmp/log/input.log and output the data to /tmp/log/output.* in Fluentd JSON format. Note that no knowledge of Fluentd is required to complete this task: all you will need to achieve this is to create the ConfigMap from the spec file provided at /opt/KDMC00102/fluentd-configmap.yaml, and mount that ConfigMap to /fluentd/etc in the adaptor-dev sidecar container
+
 
 
 

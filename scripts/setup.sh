@@ -92,7 +92,41 @@ echo "ServiceAccount 'restrictedservice' and Deployment 'appa' have been created
 
 # Setup for Question 7 starts
 
-# Q8
+kubectl create namespace qtn7 --dry-run=client -o yaml | kubectl apply -f -
+
+cat <<EOF | kubectl apply -n qtn7 -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: probe-http
+  labels:
+    app: probe-http
+spec:
+  containers:
+  - name: probe-http
+    image: nginxdemos/hello
+    ports:
+    - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: probe-http
+spec:
+  selector:
+    app: probe-http
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+EOF
+
+echo "Pod 'probe-http' and Service 'probe-http' created in namespace 'qtn7'"
+
+# Setup for Question 7 ends
+
+# Setup for Question 8 starts
+
 kubectl create namespace stress --dry-run=client -o yaml | kubectl apply -f -
 
 mkdir -p /opt/KDOB00301
@@ -121,14 +155,19 @@ kubectl run stress-low \
 
 echo "Three pods (stress-high, stress-medium, and stress-low) have been created in the 'stress' namespace."
 
-#Q9
-mkdir -p /opt/KDOB00301
+# Setup for Question 8 ends
+
+# Setup for Question 9 starts
+mkdir -p /opt/KDPD00101
+touch /opt/KDPD00101/pod1.yml
 touch /opt/KDPD00101/out1.json
+# Setup for Question 9 ends
 
-Q10
+# Setup for Question 10 starts
 kubectl create namespace kdpd00201 --dry-run=client -o yaml | kubectl apply -f -
+# Setup for Question 10 ends
 
-Q11
+# Setup for Question 11 starts
 kubectl create namespace kdpd00202 --dry-run=client -o yaml | kubectl apply -f -
 
 cat <<EOF | kubectl apply -f -
@@ -156,3 +195,37 @@ EOF
 
 echo "Deployment 'webapp' created in namespace 'kdpd00202' using nginx:1.23.4."
 
+# Setup for Question 11 ends
+
+# Setup for Question 12 starts
+mkdir -p /opt/KDMC00102
+
+cat << 'EOF' > /opt/KDMC00102/fluentd-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+data:
+  fluent.conf: |
+    <source>
+      @type tail
+      path /tmp/log/input.log
+      pos_file /tmp/log/input.log.pos
+      tag input.logs
+      <parse>
+        @type none
+      </parse>
+    </source>
+
+    <match input.logs>
+      @type file
+      path /tmp/log/output
+      <format>
+        @type json
+      </format>
+    </match>
+EOF
+
+echo "Created /opt/KDMC00102/fluentd-configmap.yaml"
+
+# Setup for Question 12 ends
