@@ -1027,6 +1027,374 @@ MAX_SCORE=$((MAX_SCORE + 5))
 
 # Evaluation for Question 16 ends
 
+# Evaluation for Question 17 starts
+
+echo "=== Evaluating Question 17 ==="
+
+# Check if the deployment exists
+DEPLOYMENT_NAME=$(kubectl get deployment web-app -n troubleshoot -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$DEPLOYMENT_NAME" ]]; then
+    echo "❌ FAIL: Deployment 'web-app' does not exist in namespace 'troubleshoot'"
+    Q17_DEPLOYMENT_SCORE=0
+    Q17_IMAGE_SCORE=0
+    Q17_REPLICAS_SCORE=0
+    Q17_AVAILABLE_SCORE=0
+else
+    echo "✅ PASS: Deployment 'web-app' exists in namespace 'troubleshoot'"
+    Q17_DEPLOYMENT_SCORE=1
+
+    # Check if deployment uses correct image
+    DEPLOYMENT_IMAGE=$(kubectl get deployment web-app -n troubleshoot -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)
+
+    if [[ "$DEPLOYMENT_IMAGE" == "nginx:1.24.0" ]]; then
+        echo "✅ PASS: Deployment uses correct image: nginx:1.24.0"
+        Q17_IMAGE_SCORE=1
+    else
+        echo "❌ FAIL: Deployment uses incorrect image: $DEPLOYMENT_IMAGE (expected: nginx:1.24.0)"
+        Q17_IMAGE_SCORE=0
+    fi
+
+    # Check if deployment has at least 2 replicas configured
+    REPLICAS=$(kubectl get deployment web-app -n troubleshoot -o jsonpath='{.spec.replicas}' 2>/dev/null)
+
+    if [[ "$REPLICAS" -ge 2 ]]; then
+        echo "✅ PASS: Deployment configured with $REPLICAS replicas (expected: at least 2)"
+        Q17_REPLICAS_SCORE=1
+    else
+        echo "❌ FAIL: Deployment has $REPLICAS replicas (expected: at least 2)"
+        Q17_REPLICAS_SCORE=0
+    fi
+
+    # Check if deployment has at least 2 ready replicas
+    READY_REPLICAS=$(kubectl get deployment web-app -n troubleshoot -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+
+    if [[ "$READY_REPLICAS" -ge 2 ]]; then
+        echo "✅ PASS: Deployment has $READY_REPLICAS ready replicas"
+        Q17_AVAILABLE_SCORE=1
+    else
+        echo "❌ FAIL: Deployment has $READY_REPLICAS ready replicas (expected: at least 2)"
+        Q17_AVAILABLE_SCORE=0
+    fi
+fi
+
+Q17_TOTAL=$((Q17_DEPLOYMENT_SCORE + Q17_IMAGE_SCORE + Q17_REPLICAS_SCORE + Q17_AVAILABLE_SCORE))
+echo "Question 17 Score: $Q17_TOTAL/4"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q17_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 4))
+
+# Evaluation for Question 17 ends
+
+# Evaluation for Question 18 starts
+
+echo "=== Evaluating Question 18 ==="
+
+# Check if the namespace exists
+NAMESPACE_EXISTS=$(kubectl get namespace kdsn00201 -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$NAMESPACE_EXISTS" ]]; then
+    echo "❌ FAIL: Namespace 'kdsn00201' does not exist"
+    Q18_NAMESPACE_SCORE=0
+    Q18_POD_SCORE=0
+    Q18_LABEL_SCORE=0
+    Q18_PROXY_POD_SCORE=0
+    Q18_STORAGE_POD_SCORE=0
+    Q18_NETPOL_SCORE=0
+else
+    echo "✅ PASS: Namespace 'kdsn00201' exists"
+    Q18_NAMESPACE_SCORE=1
+
+    # Check if kdsn00201-newpod exists
+    POD_NAME=$(kubectl get pod kdsn00201-newpod -n kdsn00201 -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+    if [[ -z "$POD_NAME" ]]; then
+        echo "❌ FAIL: Pod 'kdsn00201-newpod' does not exist in namespace 'kdsn00201'"
+        Q18_POD_SCORE=0
+        Q18_LABEL_SCORE=0
+    else
+        echo "✅ PASS: Pod 'kdsn00201-newpod' exists in namespace 'kdsn00201'"
+        Q18_POD_SCORE=1
+
+        # Check if pod has the correct label app=restricted
+        POD_LABEL=$(kubectl get pod kdsn00201-newpod -n kdsn00201 -o jsonpath='{.metadata.labels.app}' 2>/dev/null)
+
+        if [[ "$POD_LABEL" == "restricted" ]]; then
+            echo "✅ PASS: Pod has correct label app=restricted"
+            Q18_LABEL_SCORE=2
+        else
+            echo "❌ FAIL: Pod does not have correct label app=restricted (found: $POD_LABEL)"
+            Q18_LABEL_SCORE=0
+        fi
+    fi
+
+    # Check if proxy pod exists
+    PROXY_POD=$(kubectl get pod proxy -n kdsn00201 -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+    if [[ "$PROXY_POD" == "proxy" ]]; then
+        echo "✅ PASS: Proxy pod exists in namespace 'kdsn00201'"
+        Q18_PROXY_POD_SCORE=1
+    else
+        echo "❌ FAIL: Proxy pod does not exist in namespace 'kdsn00201'"
+        Q18_PROXY_POD_SCORE=0
+    fi
+
+    # Check if storage pod exists
+    STORAGE_POD=$(kubectl get pod storage -n kdsn00201 -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+    if [[ "$STORAGE_POD" == "storage" ]]; then
+        echo "✅ PASS: Storage pod exists in namespace 'kdsn00201'"
+        Q18_STORAGE_POD_SCORE=1
+    else
+        echo "❌ FAIL: Storage pod does not exist in namespace 'kdsn00201'"
+        Q18_STORAGE_POD_SCORE=0
+    fi
+
+    # Check if network policies exist
+    NETPOL_PROXY=$(kubectl get networkpolicy allow-proxy -n kdsn00201 -o jsonpath='{.metadata.name}' 2>/dev/null)
+    NETPOL_STORAGE=$(kubectl get networkpolicy allow-storage -n kdsn00201 -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+    if [[ "$NETPOL_PROXY" == "allow-proxy" ]] && [[ "$NETPOL_STORAGE" == "allow-storage" ]]; then
+        echo "✅ PASS: NetworkPolicies 'allow-proxy' and 'allow-storage' exist"
+        Q18_NETPOL_SCORE=1
+    else
+        echo "❌ FAIL: NetworkPolicies not configured correctly"
+        Q18_NETPOL_SCORE=0
+    fi
+fi
+
+Q18_TOTAL=$((Q18_NAMESPACE_SCORE + Q18_POD_SCORE + Q18_LABEL_SCORE + Q18_PROXY_POD_SCORE + Q18_STORAGE_POD_SCORE + Q18_NETPOL_SCORE))
+echo "Question 18 Score: $Q18_TOTAL/6"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q18_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 6))
+
+# Evaluation for Question 18 ends
+
+# Evaluation for Question 19 starts
+
+echo "=== Evaluating Question 19 ==="
+
+# Check if broken.txt file exists and has content
+BROKEN_FILE="/opt/KDOB00401/broken.txt"
+
+if [[ ! -f "$BROKEN_FILE" ]]; then
+    echo "❌ FAIL: File $BROKEN_FILE does not exist"
+    Q19_BROKEN_FILE_SCORE=0
+elif [[ ! -s "$BROKEN_FILE" ]]; then
+    echo "❌ FAIL: File $BROKEN_FILE is empty"
+    Q19_BROKEN_FILE_SCORE=0
+else
+    # Check if file contains production namespace and pod name in correct format
+    BROKEN_CONTENT=$(cat "$BROKEN_FILE" | tr -d '[:space:]')
+
+    if echo "$BROKEN_CONTENT" | grep -q "^production/web-server"; then
+        echo "✅ PASS: File contains correct broken pod information (production/web-server-*)"
+        Q19_BROKEN_FILE_SCORE=1
+    else
+        echo "❌ FAIL: File does not contain correct format (expected: production/web-server-*, found: $BROKEN_CONTENT)"
+        Q19_BROKEN_FILE_SCORE=0
+    fi
+fi
+
+# Check if error.txt file exists and has content
+ERROR_FILE="/opt/KDOB00401/error.txt"
+
+if [[ ! -f "$ERROR_FILE" ]]; then
+    echo "❌ FAIL: File $ERROR_FILE does not exist"
+    Q19_ERROR_FILE_SCORE=0
+elif [[ ! -s "$ERROR_FILE" ]]; then
+    echo "❌ FAIL: File $ERROR_FILE is empty"
+    Q19_ERROR_FILE_SCORE=0
+else
+    # Check if file contains event information
+    if grep -qi "event\|liveness\|unhealthy\|failed" "$ERROR_FILE"; then
+        echo "✅ PASS: File contains error event information"
+        Q19_ERROR_FILE_SCORE=1
+    else
+        echo "❌ FAIL: File does not contain expected error event information"
+        Q19_ERROR_FILE_SCORE=0
+    fi
+fi
+
+# Check if the deployment has been fixed
+DEPLOYMENT_EXISTS=$(kubectl get deployment web-server -n production -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$DEPLOYMENT_EXISTS" ]]; then
+    echo "❌ FAIL: Deployment 'web-server' does not exist in namespace 'production'"
+    Q19_DEPLOYMENT_SCORE=0
+    Q19_PROBE_FIXED_SCORE=0
+    Q19_POD_RUNNING_SCORE=0
+else
+    echo "✅ PASS: Deployment 'web-server' exists in namespace 'production'"
+    Q19_DEPLOYMENT_SCORE=1
+
+    # Check if livenessProbe has been fixed (path should not be /healthzzzz)
+    PROBE_PATH=$(kubectl get deployment web-server -n production -o jsonpath='{.spec.template.spec.containers[0].livenessProbe.httpGet.path}' 2>/dev/null)
+
+    if [[ "$PROBE_PATH" != "/healthzzzz" ]] && [[ ! -z "$PROBE_PATH" ]]; then
+        echo "✅ PASS: LivenessProbe path has been fixed (current: $PROBE_PATH)"
+        Q19_PROBE_FIXED_SCORE=2
+    else
+        echo "❌ FAIL: LivenessProbe path still broken or removed (current: $PROBE_PATH)"
+        Q19_PROBE_FIXED_SCORE=0
+    fi
+
+    # Check if pod is running successfully
+    POD_STATUS=$(kubectl get pods -n production -l app=web-server -o jsonpath='{.items[0].status.phase}' 2>/dev/null)
+    POD_READY=$(kubectl get pods -n production -l app=web-server -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
+
+    if [[ "$POD_STATUS" == "Running" ]] && [[ "$POD_READY" == "True" ]]; then
+        echo "✅ PASS: Pod is running and ready"
+        Q19_POD_RUNNING_SCORE=1
+    else
+        echo "❌ FAIL: Pod is not running successfully (status: $POD_STATUS, ready: $POD_READY)"
+        Q19_POD_RUNNING_SCORE=0
+    fi
+fi
+
+Q19_TOTAL=$((Q19_BROKEN_FILE_SCORE + Q19_ERROR_FILE_SCORE + Q19_DEPLOYMENT_SCORE + Q19_PROBE_FIXED_SCORE + Q19_POD_RUNNING_SCORE))
+echo "Question 19 Score: $Q19_TOTAL/6"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q19_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 6))
+
+# Evaluation for Question 19 ends
+
+# Evaluation for Question 20 starts
+
+echo "=== Evaluating Question 20 ==="
+
+# Check if directory exists
+DATA_DIR="/opt/KDSP00101/data"
+
+if [[ ! -d "$DATA_DIR" ]]; then
+    echo "❌ FAIL: Directory $DATA_DIR does not exist"
+    Q20_DIR_SCORE=0
+    Q20_FILE_SCORE=0
+else
+    echo "✅ PASS: Directory $DATA_DIR exists"
+    Q20_DIR_SCORE=1
+
+    # Check if index.html file exists with correct content
+    INDEX_FILE="$DATA_DIR/index.html"
+
+    if [[ ! -f "$INDEX_FILE" ]]; then
+        echo "❌ FAIL: File $INDEX_FILE does not exist"
+        Q20_FILE_SCORE=0
+    else
+        FILE_CONTENT=$(cat "$INDEX_FILE" | tr -d '[:space:]')
+
+        if [[ "$FILE_CONTENT" == "Acct=Finance" ]]; then
+            echo "✅ PASS: File contains correct content: Acct=Finance"
+            Q20_FILE_SCORE=1
+        else
+            echo "❌ FAIL: File content incorrect (expected: Acct=Finance, found: $FILE_CONTENT)"
+            Q20_FILE_SCORE=0
+        fi
+    fi
+fi
+
+# Check if PersistentVolume exists
+PV_NAME=$(kubectl get pv task-pv-volume -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$PV_NAME" ]]; then
+    echo "❌ FAIL: PersistentVolume 'task-pv-volume' does not exist"
+    Q20_PV_SCORE=0
+else
+    echo "✅ PASS: PersistentVolume 'task-pv-volume' exists"
+
+    # Check PV specifications
+    PV_CAPACITY=$(kubectl get pv task-pv-volume -o jsonpath='{.spec.capacity.storage}' 2>/dev/null)
+    PV_ACCESS_MODE=$(kubectl get pv task-pv-volume -o jsonpath='{.spec.accessModes[0]}' 2>/dev/null)
+    PV_STORAGE_CLASS=$(kubectl get pv task-pv-volume -o jsonpath='{.spec.storageClassName}' 2>/dev/null)
+    PV_HOST_PATH=$(kubectl get pv task-pv-volume -o jsonpath='{.spec.hostPath.path}' 2>/dev/null)
+
+    if [[ "$PV_CAPACITY" == "3Gi" ]] && \
+       [[ "$PV_ACCESS_MODE" == "ReadWriteOnce" ]] && \
+       [[ "$PV_STORAGE_CLASS" == "exam" ]] && \
+       [[ "$PV_HOST_PATH" == "/opt/KDSP00101/data" ]]; then
+        echo "✅ PASS: PV configured correctly (3Gi, ReadWriteOnce, storageClass: exam, hostPath: /opt/KDSP00101/data)"
+        Q20_PV_SCORE=2
+    else
+        echo "❌ FAIL: PV not configured correctly (capacity: $PV_CAPACITY, accessMode: $PV_ACCESS_MODE, storageClass: $PV_STORAGE_CLASS, hostPath: $PV_HOST_PATH)"
+        Q20_PV_SCORE=0
+    fi
+fi
+
+# Check if PersistentVolumeClaim exists
+PVC_NAME=$(kubectl get pvc task-pv-claim -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$PVC_NAME" ]]; then
+    echo "❌ FAIL: PersistentVolumeClaim 'task-pv-claim' does not exist"
+    Q20_PVC_SCORE=0
+else
+    # Check PVC specifications
+    PVC_STORAGE=$(kubectl get pvc task-pv-claim -o jsonpath='{.spec.resources.requests.storage}' 2>/dev/null)
+    PVC_ACCESS_MODE=$(kubectl get pvc task-pv-claim -o jsonpath='{.spec.accessModes[0]}' 2>/dev/null)
+    PVC_STORAGE_CLASS=$(kubectl get pvc task-pv-claim -o jsonpath='{.spec.storageClassName}' 2>/dev/null)
+    PVC_STATUS=$(kubectl get pvc task-pv-claim -o jsonpath='{.status.phase}' 2>/dev/null)
+
+    if [[ "$PVC_ACCESS_MODE" == "ReadWriteOnce" ]] && \
+       [[ "$PVC_STORAGE_CLASS" == "exam" ]] && \
+       [[ "$PVC_STATUS" == "Bound" ]]; then
+        echo "✅ PASS: PVC configured correctly and bound (storage: $PVC_STORAGE, accessMode: ReadWriteOnce, storageClass: exam)"
+        Q20_PVC_SCORE=1
+    else
+        echo "❌ FAIL: PVC not configured correctly or not bound (storage: $PVC_STORAGE, accessMode: $PVC_ACCESS_MODE, storageClass: $PVC_STORAGE_CLASS, status: $PVC_STATUS)"
+        Q20_PVC_SCORE=0
+    fi
+fi
+
+# Check if pod exists
+POD_NAME=$(kubectl get pod storage-app -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$POD_NAME" ]]; then
+    echo "❌ FAIL: Pod 'storage-app' does not exist"
+    Q20_POD_SCORE=0
+    Q20_POD_RUNNING_SCORE=0
+else
+    # Check pod label
+    POD_LABEL=$(kubectl get pod storage-app -o jsonpath='{.metadata.labels.app}' 2>/dev/null)
+
+    # Check PVC mount
+    POD_MOUNT_PATH=$(kubectl get pod storage-app -o jsonpath='{.spec.containers[0].volumeMounts[?(@.mountPath=="/usr/share/nginx/html")].mountPath}' 2>/dev/null)
+    POD_PVC=$(kubectl get pod storage-app -o jsonpath='{.spec.volumes[?(@.persistentVolumeClaim.claimName=="task-pv-claim")].persistentVolumeClaim.claimName}' 2>/dev/null)
+
+    if [[ "$POD_LABEL" == "my-storage-app" ]] && \
+       [[ "$POD_MOUNT_PATH" == "/usr/share/nginx/html" ]] && \
+       [[ "$POD_PVC" == "task-pv-claim" ]]; then
+        echo "✅ PASS: Pod configured correctly with label app=my-storage-app and PVC mounted at /usr/share/nginx/html"
+        Q20_POD_SCORE=2
+    else
+        echo "❌ FAIL: Pod not configured correctly (label: $POD_LABEL, mount: $POD_MOUNT_PATH, pvc: $POD_PVC)"
+        Q20_POD_SCORE=0
+    fi
+
+    # Check if pod is running
+    POD_STATUS=$(kubectl get pod storage-app -o jsonpath='{.status.phase}' 2>/dev/null)
+
+    if [[ "$POD_STATUS" == "Running" ]]; then
+        echo "✅ PASS: Pod is running"
+        Q20_POD_RUNNING_SCORE=1
+    else
+        echo "❌ FAIL: Pod is not running (status: $POD_STATUS)"
+        Q20_POD_RUNNING_SCORE=0
+    fi
+fi
+
+Q20_TOTAL=$((Q20_DIR_SCORE + Q20_FILE_SCORE + Q20_PV_SCORE + Q20_PVC_SCORE + Q20_POD_SCORE + Q20_POD_RUNNING_SCORE))
+echo "Question 20 Score: $Q20_TOTAL/8"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q20_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 8))
+
+# Evaluation for Question 20 ends
+
 # Final Score Summary
 echo "========================================"
 echo "TOTAL SCORE: $TOTAL_SCORE/$MAX_SCORE"

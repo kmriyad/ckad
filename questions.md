@@ -144,6 +144,62 @@ Complete the following tasks in the storage namespace (already created):
   - Mounts the PersistentVolumeClaim app-pvc at /usr/share/nginx/html
   - Has a label app=storage
 - Verify the PVC is bound and the pod is running
+### Question 17 (4)
+#### Context
+Applications can fail to deploy due to configuration errors. Troubleshooting deployment failures is a critical skill for Kubernetes developers.
+#### Task
+A deployment named web-app in the namespace troubleshoot has been created but the pods are failing to start due to an incorrect container image being specified. Complete the following:
+- Investigate the deployment in the troubleshoot namespace to identify why the pods are not running
+- Fix the deployment to use the correct image: nginx:1.24.0
+- Verify that the deployment becomes available with at least 2 ready replicas
+### Question 18 (6)
+#### Context
+Network policies in Kubernetes allow you to control traffic flow between pods. Proper network segmentation is crucial for security in a microservices architecture.
+#### Task
+You have rolled out a new pod to your infrastructure and now you need to allow it to communicate with the proxy and storage pods but nothing else. Complete the following in the kdsn00201 namespace:
+- A pod named kdsn00201-newpod is already running in the kdsn00201 namespace
+- Pods named proxy and storage are also running in the same namespace
+- NetworkPolicy resources named allow-proxy and allow-storage have already been created
+- Edit the kdsn00201-newpod to add the appropriate labels so that it matches the network policies
+- The required labels are: app=restricted for allow-proxy policy, and app=restricted for allow-storage policy
+- Verify that the pod is running with the correct labels applied
+
+Note: You should not create, modify, or delete any network policies. Only modify the pod labels.
+### Question 19 (6)
+#### Context
+A user has reported an application is unreachable due to a failing livenessProbe. You need to identify the broken pod, capture diagnostic information, and fix the issue.
+#### Task
+Perform the following tasks:
+- Find the broken pod and store its name and namespace to /opt/KDOB00401/broken.txt in the format: `<namespace>/<pod>` (e.g., `qa/my-pod`)
+- Store the associated error events to a file /opt/KDOB00401/error.txt using the `kubectl describe` command with `-o wide` output specifier
+- Fix the livenessProbe issue so the pod runs successfully
+- The associated deployment could be running in any of the following namespaces: qa, test, production, alan
+
+Both output files (/opt/KDOB00401/broken.txt and /opt/KDOB00401/error.txt) have already been created.
+### Question 20 (8)
+#### Context
+A project that you are working on has a requirement for persistent data to be available using hostPath volumes. This involves creating storage on a specific node, defining a PersistentVolume, and binding it to a pod through a PersistentVolumeClaim.
+#### Task
+Perform the following tasks to set up persistent storage:
+- Create a directory /opt/KDSP00101/data on the cluster node (use the local node if running single-node, or any worker node in multi-node setup)
+- Create a file at /opt/KDSP00101/data/index.html with the content: `Acct=Finance`
+- Create a PersistentVolume named task-pv-volume with the following specifications:
+  - Use hostPath type pointing to /opt/KDSP00101/data
+  - Allocate 3Gi capacity
+  - Access mode: ReadWriteOnce
+  - StorageClassName: exam
+- Create a PersistentVolumeClaim named task-pv-claim with the following specifications:
+  - Request at least 100Mi of storage
+  - Access mode: ReadWriteOnce
+  - StorageClassName: exam
+- Create a pod named storage-app that:
+  - Uses the nginx image
+  - Has label app=my-storage-app
+  - Mounts the PVC task-pv-claim to /usr/share/nginx/html
+- Verify that the pod can access the index.html file
+
+Note: If your cluster has multiple nodes, you may need to SSH to a worker node to create the directory and file. Ensure you return to the control plane node after completing the node-specific work.
+
 
 
 

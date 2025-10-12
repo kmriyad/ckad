@@ -346,3 +346,149 @@ kubectl create namespace storage --dry-run=client -o yaml | kubectl apply -f -
 
 echo "Namespace 'storage' created for Question 16"
 # Setup for Question 16 ends
+
+# Setup for Question 17 starts
+kubectl create namespace troubleshoot --dry-run=client -o yaml | kubectl apply -f -
+
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: troubleshoot
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:invalid-tag-12345
+        ports:
+        - containerPort: 80
+EOF
+
+echo "Deployment 'web-app' created in namespace 'troubleshoot' with incorrect image"
+# Setup for Question 17 ends
+
+# Setup for Question 18 starts
+kubectl create namespace kdsn00201 --dry-run=client -o yaml | kubectl apply -f -
+
+# Create proxy pod with label
+kubectl run proxy --image=nginx --namespace=kdsn00201 --labels="app=proxy"
+
+# Create storage pod with label
+kubectl run storage --image=nginx --namespace=kdsn00201 --labels="app=storage"
+
+# Create the new pod without the correct labels (student needs to add them)
+kubectl run kdsn00201-newpod --image=nginx --namespace=kdsn00201
+
+# Create network policies
+cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-proxy
+  namespace: kdsn00201
+spec:
+  podSelector:
+    matchLabels:
+      app: restricted
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: proxy
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: proxy
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-storage
+  namespace: kdsn00201
+spec:
+  podSelector:
+    matchLabels:
+      app: restricted
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: storage
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: storage
+EOF
+
+echo "Namespace 'kdsn00201' created with proxy, storage, and kdsn00201-newpod pods"
+echo "NetworkPolicies 'allow-proxy' and 'allow-storage' created"
+# Setup for Question 18 ends
+
+# Setup for Question 19 starts
+mkdir -p /opt/KDOB00401
+touch /opt/KDOB00401/broken.txt
+touch /opt/KDOB00401/error.txt
+
+# Create namespaces
+kubectl create namespace qa --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace test --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace alan --dry-run=client -o yaml | kubectl apply -f -
+
+# Create a deployment with broken livenessProbe in production namespace
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-server
+  template:
+    metadata:
+      labels:
+        app: web-server
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /healthzzzz
+            port: 80
+          initialDelaySeconds: 3
+          periodSeconds: 5
+EOF
+
+echo "Created namespaces qa, test, production, and alan"
+echo "Created deployment 'web-server' in namespace 'production' with broken livenessProbe"
+echo "Created /opt/KDOB00401/broken.txt and /opt/KDOB00401/error.txt"
+# Setup for Question 19 ends
+
+# Setup for Question 20 starts
+# Note: This question requires students to create the directory, file, PV, PVC, and pod themselves
+# Setup is minimal - no pre-created resources needed
+echo "Question 20: Students must create all resources including directory, PV, PVC, and pod"
+# Setup for Question 20 ends
