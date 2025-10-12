@@ -492,3 +492,46 @@ echo "Created /opt/KDOB00401/broken.txt and /opt/KDOB00401/error.txt"
 # Setup is minimal - no pre-created resources needed
 echo "Question 20: Students must create all resources including directory, PV, PVC, and pod"
 # Setup for Question 20 ends
+
+# Setup alias for easy evaluation
+echo ""
+echo "=========================================="
+echo "Setting up 'score' alias for evaluation"
+echo "=========================================="
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+EVALUATE_SCRIPT="$SCRIPT_DIR/evaluate.sh"
+
+# Function to add alias to shell config file
+add_alias_to_file() {
+    local config_file=$1
+
+    # Create config file if it doesn't exist
+    if [ ! -f "$config_file" ]; then
+        touch "$config_file"
+        echo "✓ Created $config_file"
+    fi
+
+    # Check if alias already exists
+    if ! grep -q "alias score=" "$config_file" 2>/dev/null; then
+        echo "" >> "$config_file"
+        echo "# CKAD exam evaluation alias" >> "$config_file"
+        echo "alias score='$EVALUATE_SCRIPT'" >> "$config_file"
+        echo "✓ Added 'score' alias to $config_file"
+    else
+        echo "✓ 'score' alias already exists in $config_file"
+    fi
+}
+
+# Add alias to both bash and zsh config files
+add_alias_to_file "$HOME/.bashrc"
+add_alias_to_file "$HOME/.zshrc"
+
+echo ""
+echo "To activate the alias in your current session, run:"
+echo "  source ~/.zshrc    (for zsh)"
+echo "  source ~/.bashrc   (for bash)"
+echo ""
+echo "Or simply open a new terminal window."
+echo "Then you can run 'score' to evaluate your answers!"
+echo "=========================================="
