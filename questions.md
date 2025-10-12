@@ -1,11 +1,11 @@
-### Question 1
+### Question 1 (4)
 #### Context
 You sometimes need to observe a pod's logs, and write those logs to a file for further analysis.
 #### Task
 Please complete the following:
 Deploy the counter pod to the cluster using the provided YAML spec file at /opt/KDOB00201/counter-pod.yaml
 Retrieve all currently available application logs from the running pod and store them in the file /opt/KDOB00201/log_output.txt, which has already been created
-### Question 2
+### Question 2 (4)
 #### Context
 A web application requires a specific version of redis to be used as a cache.
 #### Task
@@ -14,32 +14,32 @@ Create a pod with the following characteristics, and leave it running when compl
 - The name of the pod should be cache
 - Use the lfccncf/redis Image with the 3.2 tag
 - Expose port 6379
-### Question 3
+### Question 3 (5)
 #### Context
 You are tasked to create a secret and consume the secret in a pod using environment variables as follows in the qtn3 namespace:
 #### Task
 - Create a secret named some-secret with a key/value pair: key1/value4
 - Start an nginx pod named nginx-secret using container image nginx, and add an environment variable exposing the value of the secret key key1, using COOL_VARIABLE as the name for the environment variable inside the pod
-### Question 4
+### Question 4 (4)
 #### Context
 You are required to create a pod that requests a certain amount of CPU and memory, so it gets scheduled to a node that has those resources available.
 #### Task
 - Create a pod named nginx-resources in the pod-resources namespace that requests a minimum of 200m CPU and 2Gi memory for its container
 - The pod should use the nginx Image
 - The pod-resources namespace has already been created
-### Question 5
+### Question 5 (5)
 #### Context
 You are tasked to create a ConfigMap and consume the ConfigMap in a pod using a volume mount in the qtn5 namespace.
 #### Task
 Please complete the following:
 - Create a ConfigMap named some-config containing the key/value pair: key4/value4
 - Start a pod named nginx-configmap containing a single container using the nginx Image, and mount the key you just created into the pod under directory /yet/another/path
-### Question 6
+### Question 6 (5)
 #### Context
 Your application's namespace requires a specific service account to be used.
 #### Task
 Update the appa deployment in the frontend namespace to run as the restrictedservice service account. The service account has already been created.
-### Question 7
+### Question 7 (2)
 #### Context
 A pod is running on the cluster but it is not responding.
 ##### Task
@@ -49,7 +49,7 @@ A pod is running on the cluster but it is not responding.
 - The application has another endpoint /healthz that will indicate if the application is still working as expected by returning an HTTP 200. If the endpoint returns an HTTP 500 the application is no longer responsive
 - Configure the probe-http pod provided to use these endpoints
 - The probes should use port 8080
-### Question 8
+### Question 8 (2)
 #### Context
 It is always useful to look at the resources your applications are consuming in a cluster.
 ##### Task
@@ -130,7 +130,7 @@ A container within the poller pod is hard-coded to connect the nginxsvc service 
 - Ensure that you update the args of the poller container to connect to localhost instead of nginxsvc so that the connection is correctly proxied to the new service endpoint. 
 - You must not modify the port of the endpoint in poller's args. 
 - The spec file used to create the initial poller pod is available in /opt/KDMC00101/poller.yaml
-### Question 16 (5)
+### Question 16 (9)
 #### Context
 Your application needs persistent storage that survives pod restarts and rescheduling. You have been tasked with creating a PersistentVolumeClaim and mounting it in a pod to store application data.
 #### Task

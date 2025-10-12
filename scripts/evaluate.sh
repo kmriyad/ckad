@@ -24,7 +24,7 @@ elif [[ "$POD_STATUS" != "Running" ]]; then
     Q1_POD_SCORE=0
 else
     echo "✅ PASS: Pod 'counter-pod' is running"
-    Q1_POD_SCORE=1
+    Q1_POD_SCORE=2
 fi
 
 # Check if the log output file exists and contains logs
@@ -38,18 +38,18 @@ elif [[ ! -s "$LOG_FILE" ]]; then
     Q1_LOG_SCORE=0
 elif grep -q "Counter:" "$LOG_FILE"; then
     echo "✅ PASS: Log file contains expected counter output"
-    Q1_LOG_SCORE=1
+    Q1_LOG_SCORE=2
 else
     echo "❌ FAIL: Log file exists but does not contain expected 'Counter:' pattern"
     Q1_LOG_SCORE=0
 fi
 
 Q1_TOTAL=$((Q1_POD_SCORE + Q1_LOG_SCORE))
-echo "Question 1 Score: $Q1_TOTAL/2"
+echo "Question 1 Score: $Q1_TOTAL/4"
 echo ""
 
 TOTAL_SCORE=$((TOTAL_SCORE + Q1_TOTAL))
-MAX_SCORE=$((MAX_SCORE + 2))
+MAX_SCORE=$((MAX_SCORE + 4))
 
 # Evaluation for Question 1 ends
 
@@ -69,7 +69,7 @@ elif [[ "$POD_STATUS" != "Running" ]]; then
     Q2_POD_SCORE=0
 else
     echo "✅ PASS: Pod 'cache' is running in namespace 'web'"
-    Q2_POD_SCORE=1
+    Q2_POD_SCORE=2
 fi
 
 # Check if the correct image is used
@@ -95,11 +95,11 @@ else
 fi
 
 Q2_TOTAL=$((Q2_POD_SCORE + Q2_IMAGE_SCORE + Q2_PORT_SCORE))
-echo "Question 2 Score: $Q2_TOTAL/3"
+echo "Question 2 Score: $Q2_TOTAL/4"
 echo ""
 
 TOTAL_SCORE=$((TOTAL_SCORE + Q2_TOTAL))
-MAX_SCORE=$((MAX_SCORE + 3))
+MAX_SCORE=$((MAX_SCORE + 4))
 
 # Evaluation for Question 2 ends
 
@@ -341,14 +341,14 @@ if [[ -z "$DEPLOYMENT_NAME" ]]; then
     Q6_SERVICE_ACCOUNT_SCORE=0
 else
     echo "✅ PASS: Deployment 'appa' exists in namespace 'frontend'"
-    Q6_DEPLOYMENT_SCORE=1
+    Q6_DEPLOYMENT_SCORE=2
 
     # Check if the deployment is configured to use the restrictedservice service account
     SERVICE_ACCOUNT=$(kubectl get deployment appa -n frontend -o jsonpath='{.spec.template.spec.serviceAccountName}' 2>/dev/null)
 
     if [[ "$SERVICE_ACCOUNT" == "restrictedservice" ]]; then
         echo "✅ PASS: Deployment configured to use service account 'restrictedservice'"
-        Q6_SERVICE_ACCOUNT_SCORE=1
+        Q6_SERVICE_ACCOUNT_SCORE=3
     else
         echo "❌ FAIL: Deployment not configured with correct service account (found: '$SERVICE_ACCOUNT', expected: 'restrictedservice')"
         Q6_SERVICE_ACCOUNT_SCORE=0
@@ -356,11 +356,11 @@ else
 fi
 
 Q6_TOTAL=$((Q6_DEPLOYMENT_SCORE + Q6_SERVICE_ACCOUNT_SCORE))
-echo "Question 6 Score: $Q6_TOTAL/2"
+echo "Question 6 Score: $Q6_TOTAL/5"
 echo ""
 
 TOTAL_SCORE=$((TOTAL_SCORE + Q6_TOTAL))
-MAX_SCORE=$((MAX_SCORE + 2))
+MAX_SCORE=$((MAX_SCORE + 5))
 
 # Evaluation for Question 6 ends
 
@@ -378,7 +378,7 @@ if [[ -z "$POD_NAME" ]]; then
     Q7_READINESS_SCORE=0
 else
     echo "✅ PASS: Pod 'probe-http' exists in namespace 'qtn7'"
-    Q7_POD_SCORE=1
+    Q7_POD_SCORE=0
 
     # Check liveness probe configuration (httpGet /healthz on port 8080)
     LIVENESS_PATH=$(kubectl get pod probe-http -n qtn7 -o jsonpath='{.spec.containers[0].livenessProbe.httpGet.path}' 2>/dev/null)
@@ -406,11 +406,11 @@ else
 fi
 
 Q7_TOTAL=$((Q7_POD_SCORE + Q7_LIVENESS_SCORE + Q7_READINESS_SCORE))
-echo "Question 7 Score: $Q7_TOTAL/3"
+echo "Question 7 Score: $Q7_TOTAL/2"
 echo ""
 
 TOTAL_SCORE=$((TOTAL_SCORE + Q7_TOTAL))
-MAX_SCORE=$((MAX_SCORE + 3))
+MAX_SCORE=$((MAX_SCORE + 2))
 
 # Evaluation for Question 7 ends
 
@@ -535,7 +535,7 @@ if [[ -z "$DEPLOYMENT_NAME" ]]; then
     Q10_PORT_SCORE=0
 else
     echo "✅ PASS: Deployment 'nginx' exists in namespace 'kdpd00201'"
-    Q10_DEPLOYMENT_SCORE=1
+    Q10_DEPLOYMENT_SCORE=2
 
     # Check replica count
     REPLICAS=$(kubectl get deployment nginx -n kdpd00201 -o jsonpath='{.spec.replicas}' 2>/dev/null)
@@ -553,7 +553,7 @@ else
 
     if [[ "$IMAGE" == "lfccncf/nginx:1.12.2-alpine" ]]; then
         echo "✅ PASS: Deployment uses correct image: lfccncf/nginx:1.12.2-alpine"
-        Q10_IMAGE_SCORE=1
+        Q10_IMAGE_SCORE=2
     else
         echo "❌ FAIL: Deployment uses incorrect image: $IMAGE (expected: lfccncf/nginx:1.12.2-alpine)"
         Q10_IMAGE_SCORE=0
@@ -584,11 +584,11 @@ else
 fi
 
 Q10_TOTAL=$((Q10_DEPLOYMENT_SCORE + Q10_REPLICAS_SCORE + Q10_IMAGE_SCORE + Q10_ENV_SCORE + Q10_PORT_SCORE))
-echo "Question 10 Score: $Q10_TOTAL/5"
+echo "Question 10 Score: $Q10_TOTAL/7"
 echo ""
 
 TOTAL_SCORE=$((TOTAL_SCORE + Q10_TOTAL))
-MAX_SCORE=$((MAX_SCORE + 5))
+MAX_SCORE=$((MAX_SCORE + 7))
 
 # Evaluation for Question 10 ends
 
@@ -606,7 +606,7 @@ if [[ -z "$DEPLOYMENT_NAME" ]]; then
     Q11_ROLLBACK_SCORE=0
 else
     echo "✅ PASS: Deployment 'webapp' exists in namespace 'kdpd00202'"
-    Q11_DEPLOYMENT_SCORE=1
+    Q11_DEPLOYMENT_SCORE=2
 
     # Check rolling update strategy configuration
     MAX_SURGE=$(kubectl get deployment webapp -n kdpd00202 -o jsonpath='{.spec.strategy.rollingUpdate.maxSurge}' 2>/dev/null)
@@ -614,7 +614,7 @@ else
 
     if [[ "$MAX_SURGE" == "4" ]] && [[ "$MAX_UNAVAILABLE" == "10%" ]]; then
         echo "✅ PASS: Rolling update strategy configured correctly (maxSurge: 4, maxUnavailable: 10%)"
-        Q11_STRATEGY_SCORE=1
+        Q11_STRATEGY_SCORE=2
     else
         echo "❌ FAIL: Rolling update strategy not correctly configured (maxSurge: $MAX_SURGE, maxUnavailable: $MAX_UNAVAILABLE)"
         Q11_STRATEGY_SCORE=0
@@ -628,7 +628,7 @@ else
 
     if [[ "$CURRENT_IMAGE" == "nginx:1.23.4" ]] && [[ "$REVISION_COUNT" -ge 2 ]]; then
         echo "✅ PASS: Deployment rolled back to original version (nginx:1.23.4) with $REVISION_COUNT revisions in history"
-        Q11_ROLLBACK_SCORE=1
+        Q11_ROLLBACK_SCORE=2
     else
         echo "❌ FAIL: Deployment not properly rolled back (current image: $CURRENT_IMAGE, revisions: $REVISION_COUNT)"
         Q11_ROLLBACK_SCORE=0
@@ -636,11 +636,11 @@ else
 fi
 
 Q11_TOTAL=$((Q11_DEPLOYMENT_SCORE + Q11_STRATEGY_SCORE + Q11_ROLLBACK_SCORE))
-echo "Question 11 Score: $Q11_TOTAL/3"
+echo "Question 11 Score: $Q11_TOTAL/6"
 echo ""
 
 TOTAL_SCORE=$((TOTAL_SCORE + Q11_TOTAL))
-MAX_SCORE=$((MAX_SCORE + 3))
+MAX_SCORE=$((MAX_SCORE + 6))
 
 # Evaluation for Question 11 ends
 
@@ -660,7 +660,7 @@ if [[ -z "$DEPLOYMENT_NAME" ]]; then
     Q12_CONFIGMAP_SCORE=0
 else
     echo "✅ PASS: Deployment 'deployment-007' exists in default namespace"
-    Q12_DEPLOYMENT_SCORE=1
+    Q12_DEPLOYMENT_SCORE=2
 
     # Check containers
     CONTAINER_COUNT=$(kubectl get deployment deployment-007 -o jsonpath='{.spec.template.spec.containers[*].name}' 2>/dev/null | wc -w)
@@ -669,7 +669,7 @@ else
 
     if [[ "$CONTAINER_COUNT" == "2" ]] && [[ "$LOGGER_IMAGE" == "lfccncf/busybox:1" ]] && [[ "$ADAPTOR_IMAGE" == "lfccncf/fluentd:v0.12" ]]; then
         echo "✅ PASS: Deployment has correct containers (logger-123: lfccncf/busybox:1, adaptor-dev: lfccncf/fluentd:v0.12)"
-        Q12_CONTAINERS_SCORE=1
+        Q12_CONTAINERS_SCORE=2
     else
         echo "❌ FAIL: Containers not correctly configured (count: $CONTAINER_COUNT, logger: $LOGGER_IMAGE, adaptor: $ADAPTOR_IMAGE)"
         Q12_CONTAINERS_SCORE=0
@@ -713,11 +713,11 @@ else
 fi
 
 Q12_TOTAL=$((Q12_DEPLOYMENT_SCORE + Q12_CONTAINERS_SCORE + Q12_VOLUME_SCORE + Q12_COMMAND_SCORE + Q12_CONFIGMAP_SCORE))
-echo "Question 12 Score: $Q12_TOTAL/5"
+echo "Question 12 Score: $Q12_TOTAL/7"
 echo ""
 
 TOTAL_SCORE=$((TOTAL_SCORE + Q12_TOTAL))
-MAX_SCORE=$((MAX_SCORE + 5))
+MAX_SCORE=$((MAX_SCORE + 7))
 
 # Evaluation for Question 12 ends
 
@@ -969,7 +969,7 @@ if [[ -z "$PVC_NAME" ]]; then
     Q16_PVC_STATUS_SCORE=0
 else
     echo "✅ PASS: PersistentVolumeClaim 'app-pvc' exists in namespace 'storage'"
-    Q16_PVC_SCORE=1
+    Q16_PVC_SCORE=2
 
     # Check PVC storage size
     PVC_SIZE=$(kubectl get pvc app-pvc -n storage -o jsonpath='{.spec.resources.requests.storage}' 2>/dev/null)
@@ -1003,7 +1003,7 @@ if [[ -z "$POD_NAME" ]]; then
     Q16_VOLUME_SCORE=0
 else
     echo "✅ PASS: Pod 'storage-pod' exists in namespace 'storage'"
-    Q16_POD_SCORE=1
+    Q16_POD_SCORE=2
 
     # Check if PVC is mounted at correct path
     VOLUME_MOUNT=$(kubectl get pod storage-pod -n storage -o jsonpath='{.spec.containers[0].volumeMounts[?(@.mountPath=="/usr/share/nginx/html")].mountPath}' 2>/dev/null)
@@ -1011,7 +1011,7 @@ else
 
     if [[ "$VOLUME_MOUNT" == "/usr/share/nginx/html" ]] && [[ "$PVC_CLAIM" == "app-pvc" ]]; then
         echo "✅ PASS: PVC 'app-pvc' mounted at /usr/share/nginx/html"
-        Q16_VOLUME_SCORE=1
+        Q16_VOLUME_SCORE=3
     else
         echo "❌ FAIL: PVC not correctly mounted (mount: $VOLUME_MOUNT, claim: $PVC_CLAIM)"
         Q16_VOLUME_SCORE=0
@@ -1019,11 +1019,11 @@ else
 fi
 
 Q16_TOTAL=$((Q16_PVC_SCORE + Q16_PVC_SIZE_SCORE + Q16_PVC_STATUS_SCORE + Q16_POD_SCORE + Q16_VOLUME_SCORE))
-echo "Question 16 Score: $Q16_TOTAL/5"
+echo "Question 16 Score: $Q16_TOTAL/9"
 echo ""
 
 TOTAL_SCORE=$((TOTAL_SCORE + Q16_TOTAL))
-MAX_SCORE=$((MAX_SCORE + 5))
+MAX_SCORE=$((MAX_SCORE + 9))
 
 # Evaluation for Question 16 ends
 
@@ -1396,6 +1396,7 @@ MAX_SCORE=$((MAX_SCORE + 8))
 # Evaluation for Question 20 ends
 
 # Final Score Summary
+PERCENTAGE=$((TOTAL_SCORE * 100 / MAX_SCORE))
 echo "========================================"
-echo "TOTAL SCORE: $TOTAL_SCORE/$MAX_SCORE"
+echo "TOTAL SCORE: $TOTAL_SCORE/$MAX_SCORE ($PERCENTAGE%)"
 echo "========================================"
