@@ -721,6 +721,312 @@ MAX_SCORE=$((MAX_SCORE + 5))
 
 # Evaluation for Question 12 ends
 
+# Evaluation for Question 13 starts
+
+echo "=== Evaluating Question 13 ==="
+
+# Check if the manifest file exists and has content
+MANIFEST_FILE="/opt/KDPD00301/periodic.yaml"
+
+if [[ ! -f "$MANIFEST_FILE" ]]; then
+    echo "❌ FAIL: Manifest file $MANIFEST_FILE does not exist"
+    Q13_MANIFEST_SCORE=0
+elif [[ ! -s "$MANIFEST_FILE" ]]; then
+    echo "❌ FAIL: Manifest file $MANIFEST_FILE is empty"
+    Q13_MANIFEST_SCORE=0
+else
+    # Check if manifest contains required elements for CronJob
+    if grep -q "kind: CronJob" "$MANIFEST_FILE" && \
+       grep -q "name: hello" "$MANIFEST_FILE" && \
+       grep -q "busybox" "$MANIFEST_FILE" && \
+       grep -q "uname" "$MANIFEST_FILE" && \
+       grep -q "schedule:" "$MANIFEST_FILE"; then
+        echo "✅ PASS: Manifest contains required CronJob elements"
+        Q13_MANIFEST_SCORE=1
+    else
+        echo "❌ FAIL: Manifest missing required CronJob elements"
+        Q13_MANIFEST_SCORE=0
+    fi
+fi
+
+# Check if the CronJob exists
+CRONJOB_NAME=$(kubectl get cronjob hello -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$CRONJOB_NAME" ]]; then
+    echo "❌ FAIL: CronJob 'hello' does not exist"
+    Q13_CRONJOB_SCORE=0
+    Q13_SCHEDULE_SCORE=0
+    Q13_JOB_SCORE=0
+else
+    echo "✅ PASS: CronJob 'hello' exists"
+    Q13_CRONJOB_SCORE=1
+
+    # Check schedule (every minute: */1 * * * * or * * * * *)
+    SCHEDULE=$(kubectl get cronjob hello -o jsonpath='{.spec.schedule}' 2>/dev/null)
+
+    if [[ "$SCHEDULE" == "*/1 * * * *" ]] || [[ "$SCHEDULE" == "* * * * *" ]]; then
+        echo "✅ PASS: CronJob schedule configured to run every minute"
+        Q13_SCHEDULE_SCORE=1
+    else
+        echo "❌ FAIL: CronJob schedule is '$SCHEDULE' (expected: '*/1 * * * *' or '* * * * *')"
+        Q13_SCHEDULE_SCORE=0
+    fi
+
+    # Check if at least one job has been created
+    JOB_COUNT=$(kubectl get jobs -l app=hello 2>/dev/null | grep -c "hello-" || echo "0")
+
+    # Alternative: check jobs created by cronjob using different label
+    if [[ "$JOB_COUNT" == "0" ]]; then
+        JOB_COUNT=$(kubectl get jobs --all-namespaces 2>/dev/null | grep -c "hello-" || echo "0")
+    fi
+
+    if [[ "$JOB_COUNT" -gt 0 ]]; then
+        echo "✅ PASS: At least one job has been created from the CronJob"
+        Q13_JOB_SCORE=1
+    else
+        echo "❌ FAIL: No jobs created from the CronJob yet"
+        Q13_JOB_SCORE=0
+    fi
+fi
+
+Q13_TOTAL=$((Q13_MANIFEST_SCORE + Q13_CRONJOB_SCORE + Q13_SCHEDULE_SCORE + Q13_JOB_SCORE))
+echo "Question 13 Score: $Q13_TOTAL/4"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q13_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 4))
+
+# Evaluation for Question 13 ends
+
+# Evaluation for Question 14 starts
+
+echo "=== Evaluating Question 14 ==="
+
+# Check if the deployment exists
+DEPLOYMENT_NAME=$(kubectl get deployment kdsn00101-deployment -n kdsn00101 -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$DEPLOYMENT_NAME" ]]; then
+    echo "❌ FAIL: Deployment 'kdsn00101-deployment' does not exist in namespace 'kdsn00101'"
+    Q14_LABEL_SCORE=0
+    Q14_REPLICAS_SCORE=0
+    Q14_SERVICE_SCORE=0
+    Q14_SERVICE_TYPE_SCORE=0
+    Q14_SERVICE_PORT_SCORE=0
+    Q14_SERVICE_SELECTOR_SCORE=0
+else
+    # Check if tier=dmz label is added to pod template metadata
+    TIER_LABEL=$(kubectl get deployment kdsn00101-deployment -n kdsn00101 -o jsonpath='{.spec.template.metadata.labels.tier}' 2>/dev/null)
+
+    if [[ "$TIER_LABEL" == "dmz" ]]; then
+        echo "✅ PASS: Deployment has tier=dmz label in pod template metadata"
+        Q14_LABEL_SCORE=1
+    else
+        echo "❌ FAIL: Deployment missing tier=dmz label in pod template metadata"
+        Q14_LABEL_SCORE=0
+    fi
+
+    # Check if deployment has 4 replicas
+    REPLICAS=$(kubectl get deployment kdsn00101-deployment -n kdsn00101 -o jsonpath='{.spec.replicas}' 2>/dev/null)
+
+    if [[ "$REPLICAS" == "4" ]]; then
+        echo "✅ PASS: Deployment scaled to 4 replicas"
+        Q14_REPLICAS_SCORE=1
+    else
+        echo "❌ FAIL: Deployment has $REPLICAS replicas (expected: 4)"
+        Q14_REPLICAS_SCORE=0
+    fi
+
+    # Check if service exists
+    SERVICE_NAME=$(kubectl get service cherry -n kdsn00101 -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+    if [[ -z "$SERVICE_NAME" ]]; then
+        echo "❌ FAIL: Service 'cherry' does not exist in namespace 'kdsn00101'"
+        Q14_SERVICE_SCORE=0
+        Q14_SERVICE_TYPE_SCORE=0
+        Q14_SERVICE_PORT_SCORE=0
+        Q14_SERVICE_SELECTOR_SCORE=0
+    else
+        echo "✅ PASS: Service 'cherry' exists in namespace 'kdsn00101'"
+        Q14_SERVICE_SCORE=1
+
+        # Check service type
+        SERVICE_TYPE=$(kubectl get service cherry -n kdsn00101 -o jsonpath='{.spec.type}' 2>/dev/null)
+
+        if [[ "$SERVICE_TYPE" == "NodePort" ]]; then
+            echo "✅ PASS: Service is of type NodePort"
+            Q14_SERVICE_TYPE_SCORE=1
+        else
+            echo "❌ FAIL: Service type is '$SERVICE_TYPE' (expected: NodePort)"
+            Q14_SERVICE_TYPE_SCORE=0
+        fi
+
+        # Check service port
+        SERVICE_PORT=$(kubectl get service cherry -n kdsn00101 -o jsonpath='{.spec.ports[0].port}' 2>/dev/null)
+
+        if [[ "$SERVICE_PORT" == "8080" ]]; then
+            echo "✅ PASS: Service exposes port 8080"
+            Q14_SERVICE_PORT_SCORE=1
+        else
+            echo "❌ FAIL: Service exposes port $SERVICE_PORT (expected: 8080)"
+            Q14_SERVICE_PORT_SCORE=0
+        fi
+
+        # Check service selector for tier=dmz
+        SERVICE_SELECTOR=$(kubectl get service cherry -n kdsn00101 -o jsonpath='{.spec.selector.tier}' 2>/dev/null)
+
+        if [[ "$SERVICE_SELECTOR" == "dmz" ]]; then
+            echo "✅ PASS: Service selector includes tier=dmz"
+            Q14_SERVICE_SELECTOR_SCORE=1
+        else
+            echo "❌ FAIL: Service selector does not include tier=dmz"
+            Q14_SERVICE_SELECTOR_SCORE=0
+        fi
+    fi
+fi
+
+Q14_TOTAL=$((Q14_LABEL_SCORE + Q14_REPLICAS_SCORE + Q14_SERVICE_SCORE + Q14_SERVICE_TYPE_SCORE + Q14_SERVICE_PORT_SCORE + Q14_SERVICE_SELECTOR_SCORE))
+echo "Question 14 Score: $Q14_TOTAL/6"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q14_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 6))
+
+# Evaluation for Question 14 ends
+
+# Evaluation for Question 15 starts
+
+echo "=== Evaluating Question 15 ==="
+
+# Check if nginxsvc service is updated to port 9090
+SERVICE_PORT=$(kubectl get service nginxsvc -o jsonpath='{.spec.ports[0].port}' 2>/dev/null)
+
+if [[ "$SERVICE_PORT" == "9090" ]]; then
+    echo "✅ PASS: Service nginxsvc updated to port 9090"
+    Q15_SERVICE_SCORE=1
+else
+    echo "❌ FAIL: Service nginxsvc port is $SERVICE_PORT (expected: 9090)"
+    Q15_SERVICE_SCORE=0
+fi
+
+# Check if ConfigMap haproxy-config exists
+CONFIGMAP_NAME=$(kubectl get configmap haproxy-config -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$CONFIGMAP_NAME" == "haproxy-config" ]]; then
+    echo "✅ PASS: ConfigMap haproxy-config exists"
+    Q15_CONFIGMAP_SCORE=1
+else
+    echo "❌ FAIL: ConfigMap haproxy-config does not exist"
+    Q15_CONFIGMAP_SCORE=0
+fi
+
+# Check if poller pod has ambassador container and correct configuration
+POD_EXISTS=$(kubectl get pod poller -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$POD_EXISTS" ]]; then
+    echo "❌ FAIL: Poller pod does not exist"
+    Q15_POD_SCORE=0
+else
+    # Check for ambassador container
+    AMBASSADOR_CONTAINER=$(kubectl get pod poller -o jsonpath='{.spec.containers[?(@.name=="ambassador")].name}' 2>/dev/null)
+
+    if [[ "$AMBASSADOR_CONTAINER" == "ambassador" ]]; then
+        # Check if poller args connect to localhost
+        POLLER_ARGS=$(kubectl get pod poller -o jsonpath='{.spec.containers[?(@.name=="poller")].args}' 2>/dev/null)
+
+        if echo "$POLLER_ARGS" | grep -q "localhost:60"; then
+            echo "✅ PASS: Poller pod updated with ambassador container and connects to localhost:60"
+            Q15_POD_SCORE=1
+        else
+            echo "❌ FAIL: Poller container args not updated to connect to localhost:60"
+            Q15_POD_SCORE=0
+        fi
+    else
+        echo "❌ FAIL: Ambassador container not found in poller pod"
+        Q15_POD_SCORE=0
+    fi
+fi
+
+Q15_TOTAL=$((Q15_SERVICE_SCORE + Q15_CONFIGMAP_SCORE + Q15_POD_SCORE))
+echo "Question 15 Score: $Q15_TOTAL/3"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q15_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 3))
+
+# Evaluation for Question 15 ends
+
+# Evaluation for Question 16 starts
+
+echo "=== Evaluating Question 16 ==="
+
+# Check if PVC exists in storage namespace
+PVC_NAME=$(kubectl get pvc app-pvc -n storage -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$PVC_NAME" ]]; then
+    echo "❌ FAIL: PersistentVolumeClaim 'app-pvc' does not exist in namespace 'storage'"
+    Q16_PVC_SCORE=0
+    Q16_PVC_SIZE_SCORE=0
+    Q16_PVC_STATUS_SCORE=0
+else
+    echo "✅ PASS: PersistentVolumeClaim 'app-pvc' exists in namespace 'storage'"
+    Q16_PVC_SCORE=1
+
+    # Check PVC storage size
+    PVC_SIZE=$(kubectl get pvc app-pvc -n storage -o jsonpath='{.spec.resources.requests.storage}' 2>/dev/null)
+
+    if [[ "$PVC_SIZE" == "2Gi" ]]; then
+        echo "✅ PASS: PVC requests 2Gi of storage"
+        Q16_PVC_SIZE_SCORE=1
+    else
+        echo "❌ FAIL: PVC requests $PVC_SIZE (expected: 2Gi)"
+        Q16_PVC_SIZE_SCORE=0
+    fi
+
+    # Check PVC status (should be Bound)
+    PVC_STATUS=$(kubectl get pvc app-pvc -n storage -o jsonpath='{.status.phase}' 2>/dev/null)
+
+    if [[ "$PVC_STATUS" == "Bound" ]]; then
+        echo "✅ PASS: PVC is in Bound state"
+        Q16_PVC_STATUS_SCORE=1
+    else
+        echo "⚠️  WARNING: PVC status is '$PVC_STATUS' (expected: Bound, but this may depend on cluster storage provisioner)"
+        Q16_PVC_STATUS_SCORE=0
+    fi
+fi
+
+# Check if pod exists and is using the PVC
+POD_NAME=$(kubectl get pod storage-pod -n storage -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$POD_NAME" ]]; then
+    echo "❌ FAIL: Pod 'storage-pod' does not exist in namespace 'storage'"
+    Q16_POD_SCORE=0
+    Q16_VOLUME_SCORE=0
+else
+    echo "✅ PASS: Pod 'storage-pod' exists in namespace 'storage'"
+    Q16_POD_SCORE=1
+
+    # Check if PVC is mounted at correct path
+    VOLUME_MOUNT=$(kubectl get pod storage-pod -n storage -o jsonpath='{.spec.containers[0].volumeMounts[?(@.mountPath=="/usr/share/nginx/html")].mountPath}' 2>/dev/null)
+    PVC_CLAIM=$(kubectl get pod storage-pod -n storage -o jsonpath='{.spec.volumes[?(@.persistentVolumeClaim.claimName=="app-pvc")].persistentVolumeClaim.claimName}' 2>/dev/null)
+
+    if [[ "$VOLUME_MOUNT" == "/usr/share/nginx/html" ]] && [[ "$PVC_CLAIM" == "app-pvc" ]]; then
+        echo "✅ PASS: PVC 'app-pvc' mounted at /usr/share/nginx/html"
+        Q16_VOLUME_SCORE=1
+    else
+        echo "❌ FAIL: PVC not correctly mounted (mount: $VOLUME_MOUNT, claim: $PVC_CLAIM)"
+        Q16_VOLUME_SCORE=0
+    fi
+fi
+
+Q16_TOTAL=$((Q16_PVC_SCORE + Q16_PVC_SIZE_SCORE + Q16_PVC_STATUS_SCORE + Q16_POD_SCORE + Q16_VOLUME_SCORE))
+echo "Question 16 Score: $Q16_TOTAL/5"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q16_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 5))
+
+# Evaluation for Question 16 ends
+
 # Final Score Summary
 echo "========================================"
 echo "TOTAL SCORE: $TOTAL_SCORE/$MAX_SCORE"

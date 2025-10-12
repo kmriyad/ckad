@@ -229,3 +229,120 @@ EOF
 echo "Created /opt/KDMC00102/fluentd-configmap.yaml"
 
 # Setup for Question 12 ends
+
+# Setup for Question 13 starts
+mkdir -p /opt/KDPD00301
+touch /opt/KDPD00301/periodic.yaml
+
+echo "Created /opt/KDPD00301/periodic.yaml"
+# Setup for Question 13 ends
+
+# Setup for Question 14 starts
+kubectl create namespace kdsn00101 --dry-run=client -o yaml | kubectl apply -f -
+
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kdsn00101-deployment
+  namespace: kdsn00101
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kdsn00101
+  template:
+    metadata:
+      labels:
+        app: kdsn00101
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+EOF
+
+echo "Deployment 'kdsn00101-deployment' created in namespace 'kdsn00101'"
+# Setup for Question 14 ends
+
+# Setup for Question 15 starts
+mkdir -p /opt/KDMC00101
+
+# Create HAProxy configuration
+cat << 'EOF' > /opt/KDMC00101/haproxy.cfg
+defaults
+  mode tcp
+  timeout connect 5000ms
+  timeout client 50000ms
+  timeout server 50000ms
+
+frontend proxy_frontend
+  bind *:60
+  default_backend proxy_backend
+
+backend proxy_backend
+  server nginxsvc nginxsvc:9090
+EOF
+
+# Create initial poller pod YAML
+cat << 'EOF' > /opt/KDMC00101/poller.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: poller
+spec:
+  containers:
+  - name: poller
+    image: curlimages/curl:7.85.0
+    args:
+    - sh
+    - -c
+    - "while true; do curl -s nginxsvc:60; sleep 5; done"
+EOF
+
+# Create nginx deployment
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-backend
+  template:
+    metadata:
+      labels:
+        app: nginx-backend
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginxsvc
+spec:
+  selector:
+    app: nginx-backend
+  ports:
+  - protocol: TCP
+    port: 60
+    targetPort: 80
+EOF
+
+echo "Created HAProxy config at /opt/KDMC00101/haproxy.cfg"
+echo "Created poller.yaml at /opt/KDMC00101/poller.yaml"
+echo "Created nginx backend deployment and nginxsvc service"
+# Setup for Question 15 ends
+
+# Setup for Question 16 starts
+kubectl create namespace storage --dry-run=client -o yaml | kubectl apply -f -
+
+echo "Namespace 'storage' created for Question 16"
+# Setup for Question 16 ends

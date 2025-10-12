@@ -100,6 +100,54 @@ Create a deployment named deployment-007 in the default namespace, that:
     i luv cncf
     i luv cncf
 - The adaptor-dev sidecar container should read /tmp/log/input.log and output the data to /tmp/log/output.* in Fluentd JSON format. Note that no knowledge of Fluentd is required to complete this task: all you will need to achieve this is to create the ConfigMap from the spec file provided at /opt/KDMC00102/fluentd-configmap.yaml, and mount that ConfigMap to /fluentd/etc in the adaptor-dev sidecar container
+### Question 13 (4)
+#### Context
+Developers occasionally need to run pods that run periodically.
+#### Task
+Follow the steps below to create a pod that will start at a predetermined time and which runs to completion only once each time it is started:
+- Create a YAML formatted Kubernetes manifest /opt/KDPD00301/periodic.yaml that runs the following shell command: uname in a single busybox container. 
+- The command should run every minute and must complete within 17 seconds or be terminated by Kubernetes. 
+- The CronJob name and container name should both be hello
+- Create the resource in the above manifest and verify that the job executes successfully at least once
+### Question 14 (6)
+#### Context
+You have been tasked with scaling an existing deployment for availability, and creating a service to expose the deployment within your infrastructure.
+#### Task
+Start with the deployment named kdsn00101-deployment which has already been deployed to the namespace kdsn00101. Edit it to:
+- Add the tier=dmz key/value label to the pod template metadata to identify the pod for the service definition
+- Have 4 replicas
+Next, create and deploy in namespace kdsn00101 a service that accomplishes the following:
+- Exposes the service on TCP port 8080
+- Is mapped to the pods defined by the specification of kdsn00101-deployment
+- Is of type NodePort
+- Has a name of cherry
+### Question 15 (3)
+#### Context
+A container within the poller pod is hard-coded to connect the nginxsvc service on port 60. As this port changes to 9090 an additional container needs to be added to the poller pod which adapts the container to connect to this new port. This should be realized as an ambassador container within the pod.
+#### Task
+- Update the nginxsvc service to serve on port 9090
+- Add an HAproxy container named ambassador bound to port 60 to the poller pod and deploy the enhanced pod. - Use the Image haproxy and inject the configuration located at /opt/KDMC00101/haproxy.cfg with a ConfigMap named haproxy-config, mounted into the container so that haproxy.cfg is available at /usr/local/etc/haproxy/haproxy.cfg. 
+- Ensure that you update the args of the poller container to connect to localhost instead of nginxsvc so that the connection is correctly proxied to the new service endpoint. 
+- You must not modify the port of the endpoint in poller's args. 
+- The spec file used to create the initial poller pod is available in /opt/KDMC00101/poller.yaml
+### Question 16 (5)
+#### Context
+Your application needs persistent storage that survives pod restarts and rescheduling. You have been tasked with creating a PersistentVolumeClaim and mounting it in a pod to store application data.
+#### Task
+Complete the following tasks in the storage namespace (already created):
+- Create a PersistentVolumeClaim named app-pvc with the following specifications:
+  - Request 2Gi of storage
+  - Use accessMode ReadWriteOnce
+  - Use storageClassName standard (if available) or leave unspecified to use default
+- Create a pod named storage-pod that:
+  - Uses the nginx image
+  - Mounts the PersistentVolumeClaim app-pvc at /usr/share/nginx/html
+  - Has a label app=storage
+- Verify the PVC is bound and the pod is running
+
+
+
+
 
 
 
