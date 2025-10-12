@@ -144,14 +144,14 @@ kubectl run stress-medium \
   --image=busybox \
   --namespace=stress \
   --restart=Never \
-  -- /bin/sh -c \"while true; do yes > /dev/null; sleep 0.5; done\"
+  -- /bin/sh -c "while true; do yes > /dev/null; sleep 0.5; done"
 
 # Create a Pod that consumes LOWER CPU
 kubectl run stress-low \
   --image=busybox \
   --namespace=stress \
   --restart=Never \
-  -- /bin/sh -c \"while true; do yes > /dev/null; sleep 3; done\"
+  -- /bin/sh -c "while true; do yes > /dev/null; sleep 3; done"
 
 echo "Three pods (stress-high, stress-medium, and stress-low) have been created in the 'stress' namespace."
 
