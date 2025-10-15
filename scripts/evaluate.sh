@@ -231,11 +231,11 @@ else
     # Check memory request
     MEMORY_REQUEST=$(kubectl get pod nginx-resources -n pod-resources -o jsonpath='{.spec.containers[0].resources.requests.memory}' 2>/dev/null)
 
-    if [[ "$MEMORY_REQUEST" == "2Gi" ]]; then
-        echo "✅ PASS: Pod requests 2Gi memory"
+    if [[ "$MEMORY_REQUEST" == "64Mi" ]]; then
+        echo "✅ PASS: Pod requests 64Mi memory"
         Q4_MEMORY_SCORE=1
     else
-        echo "❌ FAIL: Pod memory request is '$MEMORY_REQUEST' (expected: 2Gi)"
+        echo "❌ FAIL: Pod memory request is '$MEMORY_REQUEST' (expected: 64Mi)"
         Q4_MEMORY_SCORE=0
     fi
 fi
