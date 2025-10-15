@@ -24,7 +24,7 @@ You are tasked to create a secret and consume the secret in a pod using environm
 #### Context
 You are required to create a pod that requests a certain amount of CPU and memory, so it gets scheduled to a node that has those resources available.
 #### Task
-- Create a pod named nginx-resources in the pod-resources namespace that requests a minimum of 200m CPU and 2Gi memory for its container
+- Create a pod named nginx-resources in the pod-resources namespace that requests a minimum of 200m CPU and 64Mi memory for its container
 - The pod should use the nginx Image
 - The pod-resources namespace has already been created
 ### Question 5 (5)
