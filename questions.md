@@ -41,14 +41,15 @@ Your application's namespace requires a specific service account to be used.
 Update the appa deployment in the frontend namespace to run as the restrictedservice service account. The service account has already been created.
 ### Question 7 (2)
 #### Context
-A pod is running on the cluster but it is not responding.
+A pod is running on the cluster but it is not responding in the namespace qtn7.
 ##### Task
 - The desired behavior is to have Kubernetes restart the pod when an endpoint returns an HTTP 500 on the /healthz endpoint. 
-- The service, probe-http, should never send traffic to the pod while it is failing. Please complete the following:
-- The application has an endpoint, /started, that will indicate if it can accept traffic by returning an HTTP 200. If the endpoint returns an HTTP 500, the application has not yet finished initialization
-- The application has another endpoint /healthz that will indicate if the application is still working as expected by returning an HTTP 200. If the endpoint returns an HTTP 500 the application is no longer responsive
-- Configure the probe-http pod provided to use these endpoints
-- The probes should use port 8080
+- The service, probe-http, should never send traffic to the pod while it is failing. 
+- Please complete the following:
+  - The application has an endpoint, /started, that will indicate if it can accept traffic by returning an HTTP 200. If the endpoint returns an HTTP 500, the application has not yet finished initialization
+  - The application has another endpoint /healthz that will indicate if the application is still working as expected by        returning an HTTP 200. If the endpoint returns an HTTP 500 the application is no longer responsive
+  - Configure the probe-http pod provided to use these endpoints
+  - The probes should use port 8080
 ### Question 8 (2)
 #### Context
 It is always useful to look at the resources your applications are consuming in a cluster.
