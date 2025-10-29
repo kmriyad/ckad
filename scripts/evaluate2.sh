@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# ABOUTME: Automated evaluation script for CKAD practice questions set 2
+# ABOUTME: Tests Kubernetes resources and configurations for correctness and compliance
 ########################################
 # CKAD Practice Set 2 Evaluation Script
 # This script evaluates student responses to questions in questions2.md
