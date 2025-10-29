@@ -326,3 +326,295 @@ TOTAL_SCORE=$((TOTAL_SCORE + Q5_TOTAL))
 MAX_SCORE=$((MAX_SCORE + 5))
 
 # Evaluation for Question 5 ends
+
+# Evaluation for Question 6 starts
+
+echo "=== Evaluating Question 6 ==="
+
+# Check StatefulSet replica count (should be scaled back to 3)
+STS_REPLICAS=$(kubectl get statefulset db -n stateful -o jsonpath='{.spec.replicas}' 2>/dev/null)
+
+if [[ "$STS_REPLICAS" == "3" ]]; then
+    echo "✅ PASS: StatefulSet 'db' scaled to 3 replicas"
+    Q6_SCALE_SCORE=2
+else
+    echo "❌ FAIL: StatefulSet not at correct replica count (expected: 3, actual: $STS_REPLICAS)"
+    Q6_SCALE_SCORE=0
+fi
+
+# Check image updated
+STS_IMAGE=$(kubectl get statefulset db -n stateful -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)
+
+if [[ "$STS_IMAGE" == "nginx:1.24" ]]; then
+    echo "✅ PASS: StatefulSet image updated to nginx:1.24"
+    Q6_IMAGE_SCORE=2
+else
+    echo "❌ FAIL: StatefulSet image not updated (expected: nginx:1.24, actual: $STS_IMAGE)"
+    Q6_IMAGE_SCORE=0
+fi
+
+# Check observations file
+OBS_FILE="/opt/KDST00301/observations.txt"
+
+if [[ ! -f "$OBS_FILE" ]]; then
+    echo "❌ FAIL: Observations file not found at $OBS_FILE"
+    Q6_OBS_SCORE=0
+elif [[ ! -s "$OBS_FILE" ]]; then
+    echo "❌ FAIL: Observations file is empty"
+    Q6_OBS_SCORE=0
+else
+    echo "✅ PASS: Observations file exists with content"
+    Q6_OBS_SCORE=1
+fi
+
+Q6_TOTAL=$((Q6_SCALE_SCORE + Q6_IMAGE_SCORE + Q6_OBS_SCORE))
+echo "Question 6 Score: $Q6_TOTAL/5"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q6_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 5))
+
+# Evaluation for Question 6 ends
+
+# Evaluation for Question 7 starts
+
+echo "=== Evaluating Question 7 ==="
+
+# Check Role
+ROLE_NAME=$(kubectl get role pod-reader -n rbac-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$ROLE_NAME" ]]; then
+    echo "❌ FAIL: Role 'pod-reader' does not exist in namespace 'rbac-test'"
+    Q7_ROLE_SCORE=0
+else
+    echo "✅ PASS: Role 'pod-reader' exists"
+
+    # Check Role permissions
+    VERBS=$(kubectl get role pod-reader -n rbac-test -o jsonpath='{.rules[0].verbs[*]}' 2>/dev/null)
+
+    if [[ "$VERBS" == *"get"* ]] && [[ "$VERBS" == *"list"* ]] && [[ "$VERBS" == *"watch"* ]]; then
+        echo "✅ PASS: Role has correct permissions (get, list, watch)"
+        Q7_ROLE_SCORE=1
+    else
+        echo "❌ FAIL: Role permissions incorrect"
+        Q7_ROLE_SCORE=0
+    fi
+fi
+
+# Check ServiceAccount
+SA_NAME=$(kubectl get serviceaccount app-sa -n rbac-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$SA_NAME" == "app-sa" ]]; then
+    echo "✅ PASS: ServiceAccount 'app-sa' exists"
+    Q7_SA_SCORE=1
+else
+    echo "❌ FAIL: ServiceAccount 'app-sa' does not exist"
+    Q7_SA_SCORE=0
+fi
+
+# Check RoleBinding
+RB_NAME=$(kubectl get rolebinding read-pods -n rbac-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+RB_ROLE=$(kubectl get rolebinding read-pods -n rbac-test -o jsonpath='{.roleRef.name}' 2>/dev/null)
+RB_SA=$(kubectl get rolebinding read-pods -n rbac-test -o jsonpath='{.subjects[0].name}' 2>/dev/null)
+
+if [[ "$RB_NAME" == "read-pods" ]] && [[ "$RB_ROLE" == "pod-reader" ]] && [[ "$RB_SA" == "app-sa" ]]; then
+    echo "✅ PASS: RoleBinding correctly binds Role to ServiceAccount"
+    Q7_RB_SCORE=2
+else
+    echo "❌ FAIL: RoleBinding not configured correctly"
+    Q7_RB_SCORE=0
+fi
+
+Q7_TOTAL=$((Q7_ROLE_SCORE + Q7_SA_SCORE + Q7_RB_SCORE))
+echo "Question 7 Score: $Q7_TOTAL/4"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q7_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 4))
+
+# Evaluation for Question 7 ends
+
+# Evaluation for Question 8 starts
+
+echo "=== Evaluating Question 8 ==="
+
+# Check ClusterRole
+CR_NAME=$(kubectl get clusterrole node-reader -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$CR_NAME" ]]; then
+    echo "❌ FAIL: ClusterRole 'node-reader' does not exist"
+    Q8_CR_SCORE=0
+else
+    echo "✅ PASS: ClusterRole 'node-reader' exists"
+
+    # Check permissions
+    VERBS=$(kubectl get clusterrole node-reader -o jsonpath='{.rules[0].verbs[*]}' 2>/dev/null)
+    RESOURCES=$(kubectl get clusterrole node-reader -o jsonpath='{.rules[0].resources[0]}' 2>/dev/null)
+
+    if [[ "$VERBS" == *"get"* ]] && [[ "$VERBS" == *"list"* ]] && [[ "$RESOURCES" == "nodes" ]]; then
+        echo "✅ PASS: ClusterRole has correct permissions for nodes"
+        Q8_CR_SCORE=2
+    else
+        echo "❌ FAIL: ClusterRole permissions incorrect"
+        Q8_CR_SCORE=0
+    fi
+fi
+
+# Check ServiceAccount
+SA_NAME=$(kubectl get serviceaccount monitor-sa -n monitoring -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$SA_NAME" == "monitor-sa" ]]; then
+    echo "✅ PASS: ServiceAccount 'monitor-sa' exists in namespace 'monitoring'"
+    Q8_SA_SCORE=1
+else
+    echo "❌ FAIL: ServiceAccount 'monitor-sa' does not exist"
+    Q8_SA_SCORE=0
+fi
+
+# Check ClusterRoleBinding
+CRB_NAME=$(kubectl get clusterrolebinding read-nodes -o jsonpath='{.metadata.name}' 2>/dev/null)
+CRB_ROLE=$(kubectl get clusterrolebinding read-nodes -o jsonpath='{.roleRef.name}' 2>/dev/null)
+CRB_SA=$(kubectl get clusterrolebinding read-nodes -o jsonpath='{.subjects[0].name}' 2>/dev/null)
+
+if [[ "$CRB_NAME" == "read-nodes" ]] && [[ "$CRB_ROLE" == "node-reader" ]] && [[ "$CRB_SA" == "monitor-sa" ]]; then
+    echo "✅ PASS: ClusterRoleBinding correctly configured"
+    Q8_CRB_SCORE=2
+else
+    echo "❌ FAIL: ClusterRoleBinding not configured correctly"
+    Q8_CRB_SCORE=0
+fi
+
+Q8_TOTAL=$((Q8_CR_SCORE + Q8_SA_SCORE + Q8_CRB_SCORE))
+echo "Question 8 Score: $Q8_TOTAL/5"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q8_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 5))
+
+# Evaluation for Question 8 ends
+
+# Evaluation for Question 9 starts
+
+echo "=== Evaluating Question 9 ==="
+
+# Check ServiceAccount
+SA_NAME=$(kubectl get serviceaccount limited-sa -n secure -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$SA_NAME" == "limited-sa" ]]; then
+    echo "✅ PASS: ServiceAccount 'limited-sa' exists"
+    Q9_SA_SCORE=1
+else
+    echo "❌ FAIL: ServiceAccount 'limited-sa' does not exist"
+    Q9_SA_SCORE=0
+fi
+
+# Check Role
+ROLE_NAME=$(kubectl get role configmap-reader -n secure -o jsonpath='{.metadata.name}' 2>/dev/null)
+RESOURCES=$(kubectl get role configmap-reader -n secure -o jsonpath='{.rules[0].resources[0]}' 2>/dev/null)
+
+if [[ "$ROLE_NAME" == "configmap-reader" ]] && [[ "$RESOURCES" == "configmaps" ]]; then
+    echo "✅ PASS: Role 'configmap-reader' exists with correct resources"
+    Q9_ROLE_SCORE=1
+else
+    echo "❌ FAIL: Role not configured correctly"
+    Q9_ROLE_SCORE=0
+fi
+
+# Check RoleBinding
+RB_NAME=$(kubectl get rolebinding read-configmaps -n secure -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$RB_NAME" == "read-configmaps" ]]; then
+    echo "✅ PASS: RoleBinding 'read-configmaps' exists"
+    Q9_RB_SCORE=1
+else
+    echo "❌ FAIL: RoleBinding does not exist"
+    Q9_RB_SCORE=0
+fi
+
+# Check Pod
+POD_NAME=$(kubectl get pod limited-pod -n secure -o jsonpath='{.metadata.name}' 2>/dev/null)
+POD_SA=$(kubectl get pod limited-pod -n secure -o jsonpath='{.spec.serviceAccountName}' 2>/dev/null)
+
+if [[ "$POD_NAME" == "limited-pod" ]] && [[ "$POD_SA" == "limited-sa" ]]; then
+    echo "✅ PASS: Pod 'limited-pod' uses ServiceAccount 'limited-sa'"
+    Q9_POD_SCORE=2
+else
+    echo "❌ FAIL: Pod not configured correctly"
+    Q9_POD_SCORE=0
+fi
+
+# Check test results file
+TEST_FILE="/opt/KDRBAC00301/test-results.txt"
+
+if [[ -f "$TEST_FILE" ]] && [[ -s "$TEST_FILE" ]]; then
+    echo "✅ PASS: Test results file exists with content"
+    Q9_TEST_SCORE=1
+else
+    echo "❌ FAIL: Test results file missing or empty"
+    Q9_TEST_SCORE=0
+fi
+
+Q9_TOTAL=$((Q9_SA_SCORE + Q9_ROLE_SCORE + Q9_RB_SCORE + Q9_POD_SCORE + Q9_TEST_SCORE))
+echo "Question 9 Score: $Q9_TOTAL/6"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q9_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 6))
+
+# Evaluation for Question 9 ends
+
+# Evaluation for Question 10 starts
+
+echo "=== Evaluating Question 10 ==="
+
+# Check if Role was created
+ROLE_NAME=$(kubectl get role -n debug -o jsonpath='{.items[?(@.rules[*].resources[0]=="configmaps")].metadata.name}' 2>/dev/null)
+
+if [[ -n "$ROLE_NAME" ]]; then
+    echo "✅ PASS: Role created for ConfigMap permissions"
+
+    # Check if Role has create permission
+    VERBS=$(kubectl get role "$ROLE_NAME" -n debug -o jsonpath='{.rules[0].verbs[*]}' 2>/dev/null)
+
+    if [[ "$VERBS" == *"create"* ]]; then
+        echo "✅ PASS: Role includes 'create' permission"
+        Q10_ROLE_SCORE=2
+    else
+        echo "❌ FAIL: Role missing 'create' permission"
+        Q10_ROLE_SCORE=0
+    fi
+else
+    echo "❌ FAIL: No Role found with ConfigMap permissions"
+    Q10_ROLE_SCORE=0
+fi
+
+# Check if RoleBinding exists connecting to app-service-account
+RB_SA=$(kubectl get rolebinding -n debug -o jsonpath='{.items[?(@.subjects[0].name=="app-service-account")].metadata.name}' 2>/dev/null)
+
+if [[ -n "$RB_SA" ]]; then
+    echo "✅ PASS: RoleBinding connects Role to app-service-account"
+    Q10_RB_SCORE=2
+else
+    echo "❌ FAIL: RoleBinding not configured correctly"
+    Q10_RB_SCORE=0
+fi
+
+# Test if ServiceAccount can now create ConfigMaps
+CAN_CREATE=$(kubectl auth can-i create configmaps --as=system:serviceaccount:debug:app-service-account -n debug 2>/dev/null)
+
+if [[ "$CAN_CREATE" == "yes" ]]; then
+    echo "✅ PASS: ServiceAccount can create ConfigMaps"
+    Q10_TEST_SCORE=1
+else
+    echo "❌ FAIL: ServiceAccount still cannot create ConfigMaps"
+    Q10_TEST_SCORE=0
+fi
+
+Q10_TOTAL=$((Q10_ROLE_SCORE + Q10_RB_SCORE + Q10_TEST_SCORE))
+echo "Question 10 Score: $Q10_TOTAL/5"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q10_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 5))
+
+# Evaluation for Question 10 ends
