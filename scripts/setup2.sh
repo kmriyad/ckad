@@ -236,12 +236,9 @@ echo "Created /opt/KDTROUBLE00101/issues.txt"
 kubectl create namespace resource-check --dry-run=client -o yaml | kubectl apply -f -
 
 # Create pods with various configurations for kubectl exercises
-kubectl run pod1 --image=nginx -n resource-check -- sleep 3600
-kubectl set resources deployment pod1 -n resource-check --requests=cpu=100m
-kubectl run pod2 --image=nginx -n resource-check -- sleep 3600
-kubectl set resources deployment pod2 -n resource-check --requests=cpu=200m
-kubectl run pod3 --image=nginx -n resource-check -- sleep 3600
-kubectl set resources deployment pod3 -n resource-check --requests=cpu=150m
+kubectl run pod1 --image=nginx -n resource-check --requests=cpu=100m -- sleep 3600
+kubectl run pod2 --image=nginx -n resource-check --requests=cpu=200m -- sleep 3600
+kubectl run pod3 --image=nginx -n resource-check --requests=cpu=150m -- sleep 3600
 
 # Create a pod with priority class
 cat <<EOF | kubectl apply -f -
