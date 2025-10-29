@@ -618,3 +618,619 @@ TOTAL_SCORE=$((TOTAL_SCORE + Q10_TOTAL))
 MAX_SCORE=$((MAX_SCORE + 5))
 
 # Evaluation for Question 10 ends
+
+# Evaluation for Question 11 starts
+
+echo "=== Evaluating Question 11 ==="
+
+JOB_NAME=$(kubectl get job data-processor -n batch -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$JOB_NAME" ]]; then
+    echo "❌ FAIL: Job 'data-processor' does not exist"
+    Q11_JOB_SCORE=0
+    Q11_COMPLETION_SCORE=0
+else
+    echo "✅ PASS: Job 'data-processor' exists"
+    Q11_JOB_SCORE=2
+
+    # Check completion
+    COMPLETIONS=$(kubectl get job data-processor -n batch -o jsonpath='{.status.succeeded}' 2>/dev/null)
+
+    if [[ "$COMPLETIONS" == "1" ]]; then
+        echo "✅ PASS: Job completed successfully"
+        Q11_COMPLETION_SCORE=1
+    else
+        echo "❌ FAIL: Job has not completed successfully"
+        Q11_COMPLETION_SCORE=0
+    fi
+fi
+
+# Check status file
+STATUS_FILE="/opt/KDJOB00101/status.txt"
+
+if [[ -f "$STATUS_FILE" ]] && [[ -s "$STATUS_FILE" ]]; then
+    echo "✅ PASS: Status file exists with content"
+    Q11_FILE_SCORE=1
+else
+    echo "❌ FAIL: Status file missing or empty"
+    Q11_FILE_SCORE=0
+fi
+
+Q11_TOTAL=$((Q11_JOB_SCORE + Q11_COMPLETION_SCORE + Q11_FILE_SCORE))
+echo "Question 11 Score: $Q11_TOTAL/4"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q11_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 4))
+
+# Evaluation for Question 11 ends
+
+# Evaluation for Question 12 starts
+
+echo "=== Evaluating Question 12 ==="
+
+JOB_NAME=$(kubectl get job parallel-processor -n batch -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$JOB_NAME" ]]; then
+    echo "❌ FAIL: Job 'parallel-processor' does not exist"
+    Q12_JOB_SCORE=0
+    Q12_PARALLEL_SCORE=0
+    Q12_COMPLETIONS_SCORE=0
+else
+    echo "✅ PASS: Job 'parallel-processor' exists"
+    Q12_JOB_SCORE=1
+
+    # Check parallelism
+    PARALLELISM=$(kubectl get job parallel-processor -n batch -o jsonpath='{.spec.parallelism}' 2>/dev/null)
+
+    if [[ "$PARALLELISM" == "3" ]]; then
+        echo "✅ PASS: Job parallelism set to 3"
+        Q12_PARALLEL_SCORE=1
+    else
+        echo "❌ FAIL: Job parallelism incorrect (expected: 3, actual: $PARALLELISM)"
+        Q12_PARALLEL_SCORE=0
+    fi
+
+    # Check completions
+    COMPLETIONS_SPEC=$(kubectl get job parallel-processor -n batch -o jsonpath='{.spec.completions}' 2>/dev/null)
+    COMPLETIONS_STATUS=$(kubectl get job parallel-processor -n batch -o jsonpath='{.status.succeeded}' 2>/dev/null)
+
+    if [[ "$COMPLETIONS_SPEC" == "9" ]]; then
+        echo "✅ PASS: Job completions set to 9"
+
+        if [[ "$COMPLETIONS_STATUS" == "9" ]]; then
+            echo "✅ PASS: Job completed all 9 tasks"
+            Q12_COMPLETIONS_SCORE=2
+        else
+            echo "⚠️  PARTIAL: Job configured but not yet complete ($COMPLETIONS_STATUS/9)"
+            Q12_COMPLETIONS_SCORE=1
+        fi
+    else
+        echo "❌ FAIL: Job completions incorrect (expected: 9, actual: $COMPLETIONS_SPEC)"
+        Q12_COMPLETIONS_SCORE=0
+    fi
+fi
+
+Q12_TOTAL=$((Q12_JOB_SCORE + Q12_PARALLEL_SCORE + Q12_COMPLETIONS_SCORE))
+echo "Question 12 Score: $Q12_TOTAL/4"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q12_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 4))
+
+# Evaluation for Question 12 ends
+
+# Evaluation for Question 13 starts
+
+echo "=== Evaluating Question 13 ==="
+
+JOB_NAME=$(kubectl get job timeout-job -n batch -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ -z "$JOB_NAME" ]]; then
+    echo "❌ FAIL: Job 'timeout-job' does not exist"
+    Q13_JOB_SCORE=0
+    Q13_BACKOFF_SCORE=0
+    Q13_DEADLINE_SCORE=0
+else
+    echo "✅ PASS: Job 'timeout-job' exists"
+    Q13_JOB_SCORE=1
+
+    # Check backoffLimit
+    BACKOFF=$(kubectl get job timeout-job -n batch -o jsonpath='{.spec.backoffLimit}' 2>/dev/null)
+
+    if [[ "$BACKOFF" == "2" ]]; then
+        echo "✅ PASS: backoffLimit set to 2"
+        Q13_BACKOFF_SCORE=1
+    else
+        echo "❌ FAIL: backoffLimit incorrect (expected: 2, actual: $BACKOFF)"
+        Q13_BACKOFF_SCORE=0
+    fi
+
+    # Check activeDeadlineSeconds
+    DEADLINE=$(kubectl get job timeout-job -n batch -o jsonpath='{.spec.activeDeadlineSeconds}' 2>/dev/null)
+
+    if [[ "$DEADLINE" == "30" ]]; then
+        echo "✅ PASS: activeDeadlineSeconds set to 30"
+        Q13_DEADLINE_SCORE=1
+    else
+        echo "❌ FAIL: activeDeadlineSeconds incorrect (expected: 30, actual: $DEADLINE)"
+        Q13_DEADLINE_SCORE=0
+    fi
+fi
+
+# Check behavior documentation
+BEHAVIOR_FILE="/opt/KDJOB00301/behavior.txt"
+
+if [[ -f "$BEHAVIOR_FILE" ]] && [[ -s "$BEHAVIOR_FILE" ]]; then
+    echo "✅ PASS: Behavior documentation exists"
+    Q13_DOC_SCORE=1
+else
+    echo "❌ FAIL: Behavior documentation missing or empty"
+    Q13_DOC_SCORE=0
+fi
+
+Q13_TOTAL=$((Q13_JOB_SCORE + Q13_BACKOFF_SCORE + Q13_DEADLINE_SCORE + Q13_DOC_SCORE))
+echo "Question 13 Score: $Q13_TOTAL/4"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q13_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 4))
+
+# Evaluation for Question 13 ends
+
+# Evaluation for Question 14 starts
+
+echo "=== Evaluating Question 14 ==="
+
+NS_EXISTS=$(kubectl get namespace quota-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$NS_EXISTS" == "quota-test" ]]; then
+    echo "✅ PASS: Namespace 'quota-test' exists"
+    Q14_NS_SCORE=1
+else
+    echo "❌ FAIL: Namespace 'quota-test' does not exist"
+    Q14_NS_SCORE=0
+fi
+
+# Check ResourceQuota
+QUOTA_NAME=$(kubectl get resourcequota -n quota-test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+
+if [[ -n "$QUOTA_NAME" ]]; then
+    echo "✅ PASS: ResourceQuota exists in namespace"
+
+    PODS_LIMIT=$(kubectl get resourcequota "$QUOTA_NAME" -n quota-test -o jsonpath='{.spec.hard.pods}' 2>/dev/null)
+    CPU_LIMIT=$(kubectl get resourcequota "$QUOTA_NAME" -n quota-test -o jsonpath='{.spec.hard.requests\.cpu}' 2>/dev/null)
+    MEM_LIMIT=$(kubectl get resourcequota "$QUOTA_NAME" -n quota-test -o jsonpath='{.spec.hard.requests\.memory}' 2>/dev/null)
+
+    if [[ "$PODS_LIMIT" == "3" ]] && [[ "$CPU_LIMIT" == "1" ]] && [[ "$MEM_LIMIT" == "1Gi" ]]; then
+        echo "✅ PASS: ResourceQuota configured correctly"
+        Q14_QUOTA_SCORE=2
+    else
+        echo "❌ FAIL: ResourceQuota limits incorrect"
+        Q14_QUOTA_SCORE=0
+    fi
+else
+    echo "❌ FAIL: No ResourceQuota found"
+    Q14_QUOTA_SCORE=0
+fi
+
+# Check pods
+POD_COUNT=$(kubectl get pods -n quota-test --no-headers 2>/dev/null | wc -l | tr -d ' ')
+
+if [[ "$POD_COUNT" -ge "2" ]]; then
+    echo "✅ PASS: At least 2 pods created within quota"
+    Q14_PODS_SCORE=1
+else
+    echo "❌ FAIL: Not enough pods created"
+    Q14_PODS_SCORE=0
+fi
+
+# Check documentation file
+QUOTA_FILE="/opt/KDRES00101/quota-test.txt"
+
+if [[ -f "$QUOTA_FILE" ]] && [[ -s "$QUOTA_FILE" ]]; then
+    echo "✅ PASS: Quota test documentation exists"
+    Q14_DOC_SCORE=1
+else
+    echo "❌ FAIL: Documentation missing or empty"
+    Q14_DOC_SCORE=0
+fi
+
+Q14_TOTAL=$((Q14_NS_SCORE + Q14_QUOTA_SCORE + Q14_PODS_SCORE + Q14_DOC_SCORE))
+echo "Question 14 Score: $Q14_TOTAL/5"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q14_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 5))
+
+# Evaluation for Question 14 ends
+
+# Evaluation for Question 15 starts
+
+echo "=== Evaluating Question 15 ==="
+
+NS_EXISTS=$(kubectl get namespace limits-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$NS_EXISTS" == "limits-test" ]]; then
+    echo "✅ PASS: Namespace 'limits-test' exists"
+    Q15_NS_SCORE=1
+else
+    echo "❌ FAIL: Namespace 'limits-test' does not exist"
+    Q15_NS_SCORE=0
+fi
+
+# Check LimitRange
+LR_NAME=$(kubectl get limitrange -n limits-test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+
+if [[ -n "$LR_NAME" ]]; then
+    echo "✅ PASS: LimitRange exists"
+
+    DEF_REQ_CPU=$(kubectl get limitrange "$LR_NAME" -n limits-test -o jsonpath='{.spec.limits[0].defaultRequest.cpu}' 2>/dev/null)
+    DEF_REQ_MEM=$(kubectl get limitrange "$LR_NAME" -n limits-test -o jsonpath='{.spec.limits[0].defaultRequest.memory}' 2>/dev/null)
+    DEF_LIM_CPU=$(kubectl get limitrange "$LR_NAME" -n limits-test -o jsonpath='{.spec.limits[0].default.cpu}' 2>/dev/null)
+    DEF_LIM_MEM=$(kubectl get limitrange "$LR_NAME" -n limits-test -o jsonpath='{.spec.limits[0].default.memory}' 2>/dev/null)
+
+    if [[ "$DEF_REQ_CPU" == "100m" ]] && [[ "$DEF_REQ_MEM" == "128Mi" ]] && [[ "$DEF_LIM_CPU" == "200m" ]] && [[ "$DEF_LIM_MEM" == "256Mi" ]]; then
+        echo "✅ PASS: LimitRange defaults configured correctly"
+        Q15_LR_SCORE=2
+    else
+        echo "❌ FAIL: LimitRange defaults incorrect"
+        Q15_LR_SCORE=0
+    fi
+else
+    echo "❌ FAIL: No LimitRange found"
+    Q15_LR_SCORE=0
+fi
+
+# Check pod with auto-applied defaults
+POD_NAME=$(kubectl get pod test-pod -n limits-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$POD_NAME" == "test-pod" ]]; then
+    POD_REQ_CPU=$(kubectl get pod test-pod -n limits-test -o jsonpath='{.spec.containers[0].resources.requests.cpu}' 2>/dev/null)
+    POD_REQ_MEM=$(kubectl get pod test-pod -n limits-test -o jsonpath='{.spec.containers[0].resources.requests.memory}' 2>/dev/null)
+
+    if [[ "$POD_REQ_CPU" == "100m" ]] && [[ "$POD_REQ_MEM" == "128Mi" ]]; then
+        echo "✅ PASS: Pod has default resources auto-applied"
+        Q15_POD_SCORE=2
+    else
+        echo "❌ FAIL: Pod does not have correct defaults"
+        Q15_POD_SCORE=0
+    fi
+else
+    echo "❌ FAIL: Pod 'test-pod' does not exist"
+    Q15_POD_SCORE=0
+fi
+
+Q15_TOTAL=$((Q15_NS_SCORE + Q15_LR_SCORE + Q15_POD_SCORE))
+echo "Question 15 Score: $Q15_TOTAL/5"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q15_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 5))
+
+# Evaluation for Question 15 ends
+
+# Evaluation for Question 16 starts
+
+echo "=== Evaluating Question 16 ==="
+
+# Check deployment
+DEPLOY_NAME=$(kubectl get deployment scalable-app -n autoscale -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$DEPLOY_NAME" == "scalable-app" ]]; then
+    echo "✅ PASS: Deployment 'scalable-app' exists"
+
+    # Check resource requests
+    CPU_REQUEST=$(kubectl get deployment scalable-app -n autoscale -o jsonpath='{.spec.template.spec.containers[0].resources.requests.cpu}' 2>/dev/null)
+
+    if [[ "$CPU_REQUEST" == "100m" ]]; then
+        echo "✅ PASS: Deployment has CPU request of 100m"
+        Q16_DEPLOY_SCORE=2
+    else
+        echo "❌ FAIL: Deployment CPU request incorrect"
+        Q16_DEPLOY_SCORE=0
+    fi
+else
+    echo "❌ FAIL: Deployment 'scalable-app' does not exist"
+    Q16_DEPLOY_SCORE=0
+fi
+
+# Check HPA
+HPA_NAME=$(kubectl get hpa -n autoscale -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+
+if [[ -n "$HPA_NAME" ]]; then
+    echo "✅ PASS: HPA exists"
+
+    MIN_REPLICAS=$(kubectl get hpa "$HPA_NAME" -n autoscale -o jsonpath='{.spec.minReplicas}' 2>/dev/null)
+    MAX_REPLICAS=$(kubectl get hpa "$HPA_NAME" -n autoscale -o jsonpath='{.spec.maxReplicas}' 2>/dev/null)
+    TARGET_CPU=$(kubectl get hpa "$HPA_NAME" -n autoscale -o jsonpath='{.spec.metrics[0].resource.target.averageUtilization}' 2>/dev/null)
+
+    if [[ "$MIN_REPLICAS" == "1" ]] && [[ "$MAX_REPLICAS" == "5" ]] && [[ "$TARGET_CPU" == "50" ]]; then
+        echo "✅ PASS: HPA configured correctly"
+        Q16_HPA_SCORE=2
+    else
+        echo "❌ FAIL: HPA configuration incorrect"
+        Q16_HPA_SCORE=0
+    fi
+else
+    echo "❌ FAIL: No HPA found"
+    Q16_HPA_SCORE=0
+fi
+
+# Check documentation
+SCALING_FILE="/opt/KDHPA00101/scaling.txt"
+
+if [[ -f "$SCALING_FILE" ]] && [[ -s "$SCALING_FILE" ]]; then
+    echo "✅ PASS: Scaling documentation exists"
+    Q16_DOC_SCORE=1
+else
+    echo "❌ FAIL: Documentation missing or empty"
+    Q16_DOC_SCORE=0
+fi
+
+Q16_TOTAL=$((Q16_DEPLOY_SCORE + Q16_HPA_SCORE + Q16_DOC_SCORE))
+echo "Question 16 Score: $Q16_TOTAL/5"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q16_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 5))
+
+# Evaluation for Question 16 ends
+
+# Evaluation for Question 17 starts
+
+echo "=== Evaluating Question 17 ==="
+
+# Check deployments and services
+APP1_DEPLOY=$(kubectl get deployment app1 -n ingress-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+APP2_DEPLOY=$(kubectl get deployment app2 -n ingress-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$APP1_DEPLOY" == "app1" ]] && [[ "$APP2_DEPLOY" == "app2" ]]; then
+    echo "✅ PASS: Both deployments exist"
+    Q17_DEPLOY_SCORE=1
+else
+    echo "❌ FAIL: Deployments missing"
+    Q17_DEPLOY_SCORE=0
+fi
+
+APP1_SVC=$(kubectl get service app1-service -n ingress-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+APP2_SVC=$(kubectl get service app2-service -n ingress-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$APP1_SVC" == "app1-service" ]] && [[ "$APP2_SVC" == "app2-service" ]]; then
+    echo "✅ PASS: Both services exist"
+    Q17_SVC_SCORE=1
+else
+    echo "❌ FAIL: Services missing"
+    Q17_SVC_SCORE=0
+fi
+
+# Check Ingress
+ING_NAME=$(kubectl get ingress path-ingress -n ingress-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$ING_NAME" == "path-ingress" ]]; then
+    echo "✅ PASS: Ingress 'path-ingress' exists"
+
+    # Check host
+    ING_HOST=$(kubectl get ingress path-ingress -n ingress-test -o jsonpath='{.spec.rules[0].host}' 2>/dev/null)
+
+    if [[ "$ING_HOST" == "test.example.com" ]]; then
+        echo "✅ PASS: Ingress host correct"
+        Q17_ING_HOST_SCORE=1
+    else
+        echo "❌ FAIL: Ingress host incorrect"
+        Q17_ING_HOST_SCORE=0
+    fi
+
+    # Check paths
+    PATH1=$(kubectl get ingress path-ingress -n ingress-test -o jsonpath='{.spec.rules[0].http.paths[?(@.path=="/app1")].backend.service.name}' 2>/dev/null)
+    PATH2=$(kubectl get ingress path-ingress -n ingress-test -o jsonpath='{.spec.rules[0].http.paths[?(@.path=="/app2")].backend.service.name}' 2>/dev/null)
+
+    if [[ "$PATH1" == "app1-service" ]] && [[ "$PATH2" == "app2-service" ]]; then
+        echo "✅ PASS: Ingress paths configured correctly"
+        Q17_ING_PATHS_SCORE=3
+    else
+        echo "❌ FAIL: Ingress paths incorrect"
+        Q17_ING_PATHS_SCORE=0
+    fi
+else
+    echo "❌ FAIL: Ingress 'path-ingress' does not exist"
+    Q17_ING_HOST_SCORE=0
+    Q17_ING_PATHS_SCORE=0
+fi
+
+Q17_TOTAL=$((Q17_DEPLOY_SCORE + Q17_SVC_SCORE + Q17_ING_HOST_SCORE + Q17_ING_PATHS_SCORE))
+echo "Question 17 Score: $Q17_TOTAL/6"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q17_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 6))
+
+# Evaluation for Question 17 ends
+
+# Evaluation for Question 18 starts
+
+echo "=== Evaluating Question 18 ==="
+
+ING_NAME=$(kubectl get ingress secure-ingress -n ingress-test -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$ING_NAME" == "secure-ingress" ]]; then
+    echo "✅ PASS: Ingress 'secure-ingress' exists"
+    Q18_ING_SCORE=1
+
+    # Check TLS configuration
+    TLS_SECRET=$(kubectl get ingress secure-ingress -n ingress-test -o jsonpath='{.spec.tls[0].secretName}' 2>/dev/null)
+
+    if [[ "$TLS_SECRET" == "tls-secret" ]]; then
+        echo "✅ PASS: TLS configured with correct Secret"
+        Q18_TLS_SCORE=2
+    else
+        echo "❌ FAIL: TLS Secret incorrect"
+        Q18_TLS_SCORE=0
+    fi
+
+    # Check host
+    ING_HOST=$(kubectl get ingress secure-ingress -n ingress-test -o jsonpath='{.spec.rules[0].host}' 2>/dev/null)
+    TLS_HOST=$(kubectl get ingress secure-ingress -n ingress-test -o jsonpath='{.spec.tls[0].hosts[0]}' 2>/dev/null)
+
+    if [[ "$ING_HOST" == "secure.example.com" ]] && [[ "$TLS_HOST" == "secure.example.com" ]]; then
+        echo "✅ PASS: Host configured correctly"
+        Q18_HOST_SCORE=1
+    else
+        echo "❌ FAIL: Host configuration incorrect"
+        Q18_HOST_SCORE=0
+    fi
+
+    # Check backend
+    BACKEND=$(kubectl get ingress secure-ingress -n ingress-test -o jsonpath='{.spec.rules[0].http.paths[0].backend.service.name}' 2>/dev/null)
+
+    if [[ "$BACKEND" == "app1-service" ]]; then
+        echo "✅ PASS: Backend service correct"
+        Q18_BACKEND_SCORE=1
+    else
+        echo "❌ FAIL: Backend service incorrect"
+        Q18_BACKEND_SCORE=0
+    fi
+else
+    echo "❌ FAIL: Ingress 'secure-ingress' does not exist"
+    Q18_ING_SCORE=0
+    Q18_TLS_SCORE=0
+    Q18_HOST_SCORE=0
+    Q18_BACKEND_SCORE=0
+fi
+
+Q18_TOTAL=$((Q18_ING_SCORE + Q18_TLS_SCORE + Q18_HOST_SCORE + Q18_BACKEND_SCORE))
+echo "Question 18 Score: $Q18_TOTAL/5"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q18_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 5))
+
+# Evaluation for Question 18 ends
+
+# Evaluation for Question 19 starts
+
+echo "=== Evaluating Question 19 ==="
+
+# Check deployment status
+DEPLOY_NAME=$(kubectl get deployment broken-app -n troubleshoot2 -o jsonpath='{.metadata.name}' 2>/dev/null)
+
+if [[ "$DEPLOY_NAME" == "broken-app" ]]; then
+    READY_REPLICAS=$(kubectl get deployment broken-app -n troubleshoot2 -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    DESIRED_REPLICAS=$(kubectl get deployment broken-app -n troubleshoot2 -o jsonpath='{.spec.replicas}' 2>/dev/null)
+
+    if [[ "$READY_REPLICAS" == "2" ]] && [[ "$DESIRED_REPLICAS" == "2" ]]; then
+        echo "✅ PASS: Deployment 'broken-app' has 2/2 replicas ready"
+        Q19_DEPLOY_SCORE=3
+    else
+        echo "❌ FAIL: Deployment not fully ready (ready: $READY_REPLICAS/2)"
+        Q19_DEPLOY_SCORE=0
+    fi
+else
+    echo "❌ FAIL: Deployment 'broken-app' does not exist"
+    Q19_DEPLOY_SCORE=0
+fi
+
+# Check issues documentation
+ISSUES_FILE="/opt/KDTROUBLE00101/issues.txt"
+
+if [[ ! -f "$ISSUES_FILE" ]]; then
+    echo "❌ FAIL: Issues file not found"
+    Q19_ISSUES_SCORE=0
+elif [[ ! -s "$ISSUES_FILE" ]]; then
+    echo "❌ FAIL: Issues file is empty"
+    Q19_ISSUES_SCORE=0
+else
+    ISSUE_COUNT=$(wc -l < "$ISSUES_FILE" | tr -d ' ')
+
+    if [[ "$ISSUE_COUNT" -ge "4" ]]; then
+        echo "✅ PASS: All 4 issues documented"
+        Q19_ISSUES_SCORE=4
+    else
+        echo "⚠️  PARTIAL: Only $ISSUE_COUNT issues documented (expected 4)"
+        Q19_ISSUES_SCORE=$ISSUE_COUNT
+    fi
+fi
+
+Q19_TOTAL=$((Q19_DEPLOY_SCORE + Q19_ISSUES_SCORE))
+echo "Question 19 Score: $Q19_TOTAL/7"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q19_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 7))
+
+# Evaluation for Question 19 ends
+
+# Evaluation for Question 20 starts
+
+echo "=== Evaluating Question 20 ==="
+
+# Check node-info.txt
+NODE_FILE="/opt/KDCLI00101/node-info.txt"
+
+if [[ -f "$NODE_FILE" ]] && [[ -s "$NODE_FILE" ]]; then
+    echo "✅ PASS: node-info.txt exists with content"
+    Q20_NODE_SCORE=2
+else
+    echo "❌ FAIL: node-info.txt missing or empty"
+    Q20_NODE_SCORE=0
+fi
+
+# Check pod-resources.txt
+POD_RESOURCES_FILE="/opt/KDCLI00101/pod-resources.txt"
+
+if [[ -f "$POD_RESOURCES_FILE" ]] && [[ -s "$POD_RESOURCES_FILE" ]]; then
+    echo "✅ PASS: pod-resources.txt exists with content"
+    Q20_RESOURCES_SCORE=2
+else
+    echo "❌ FAIL: pod-resources.txt missing or empty"
+    Q20_RESOURCES_SCORE=0
+fi
+
+# Check high-priority.txt
+PRIORITY_FILE="/opt/KDCLI00101/high-priority.txt"
+
+if [[ -f "$PRIORITY_FILE" ]] && [[ -s "$PRIORITY_FILE" ]]; then
+    echo "✅ PASS: high-priority.txt exists with content"
+    Q20_PRIORITY_SCORE=2
+else
+    echo "❌ FAIL: high-priority.txt missing or empty"
+    Q20_PRIORITY_SCORE=0
+fi
+
+# Check service-endpoints.txt
+ENDPOINTS_FILE="/opt/KDCLI00101/service-endpoints.txt"
+
+if [[ -f "$ENDPOINTS_FILE" ]] && [[ -s "$ENDPOINTS_FILE" ]]; then
+    echo "✅ PASS: service-endpoints.txt exists with content"
+    Q20_ENDPOINTS_SCORE=2
+else
+    echo "❌ FAIL: service-endpoints.txt missing or empty"
+    Q20_ENDPOINTS_SCORE=0
+fi
+
+Q20_TOTAL=$((Q20_NODE_SCORE + Q20_RESOURCES_SCORE + Q20_PRIORITY_SCORE + Q20_ENDPOINTS_SCORE))
+echo "Question 20 Score: $Q20_TOTAL/8"
+echo ""
+
+TOTAL_SCORE=$((TOTAL_SCORE + Q20_TOTAL))
+MAX_SCORE=$((MAX_SCORE + 8))
+
+# Evaluation for Question 20 ends
+
+# Final Score Summary
+
+echo "=========================================="
+echo "FINAL SCORE: $TOTAL_SCORE/$MAX_SCORE"
+PERCENTAGE=$((TOTAL_SCORE * 100 / MAX_SCORE))
+echo "Percentage: $PERCENTAGE%"
+echo "=========================================="
+
+if [[ $PERCENTAGE -ge 90 ]]; then
+    echo "🎉 Excellent! You've mastered advanced CKAD concepts!"
+elif [[ $PERCENTAGE -ge 70 ]]; then
+    echo "👍 Good job! Review the failed questions to improve."
+elif [[ $PERCENTAGE -ge 50 ]]; then
+    echo "📚 Keep practicing! Focus on the areas where you lost points."
+else
+    echo "💪 Don't give up! Review the concepts and try again."
+fi
