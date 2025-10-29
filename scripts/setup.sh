@@ -132,28 +132,69 @@ kubectl create namespace stress --dry-run=client -o yaml | kubectl apply -f -
 mkdir -p /opt/KDOB00301
 touch /opt/KDOB00301/pod.txt
 
-# Create a Pod that consumes HIGH CPU
-kubectl run stress-high \
-  --image=busybox \
-  --namespace=stress \
-  --restart=Never \
-  -- /bin/sh -c "while true; do yes > /dev/null; done"
+# Create pods with different CPU consumption patterns using resource requests
+# The stress-high pod will request and use the most CPU
 
-# Create a Pod that consumes MEDIUM CPU
-kubectl run stress-medium \
-  --image=busybox \
-  --namespace=stress \
-  --restart=Never \
-  -- /bin/sh -c "while true; do yes > /dev/null; sleep 0.5; done"
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress-high
+  namespace: stress
+spec:
+  containers:
+  - name: stress
+    image: polinux/stress
+    resources:
+      requests:
+        memory: "50Mi"
+        cpu: "500m"
+      limits:
+        memory: "100Mi"
+        cpu: "1000m"
+    command: ["stress"]
+    args: ["--cpu", "2", "--vm", "1", "--vm-bytes", "50M"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress-medium
+  namespace: stress
+spec:
+  containers:
+  - name: stress
+    image: polinux/stress
+    resources:
+      requests:
+        memory: "30Mi"
+        cpu: "250m"
+      limits:
+        memory: "60Mi"
+        cpu: "500m"
+    command: ["stress"]
+    args: ["--cpu", "1", "--vm", "1", "--vm-bytes", "30M"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress-low
+  namespace: stress
+spec:
+  containers:
+  - name: stress
+    image: polinux/stress
+    resources:
+      requests:
+        memory: "20Mi"
+        cpu: "100m"
+      limits:
+        memory: "40Mi"
+        cpu: "250m"
+    command: ["stress"]
+    args: ["--cpu", "1", "--vm", "1", "--vm-bytes", "20M", "--vm-hang", "5"]
+EOF
 
-# Create a Pod that consumes LOWER CPU
-kubectl run stress-low \
-  --image=busybox \
-  --namespace=stress \
-  --restart=Never \
-  -- /bin/sh -c "while true; do yes > /dev/null; sleep 3; done"
-
-echo "Three pods (stress-high, stress-medium, and stress-low) have been created in the 'stress' namespace."
+echo "Three pods (stress-high, stress-medium, and stress-low) have been created in the 'stress' namespace with different resource profiles."
 
 # Setup for Question 8 ends
 
